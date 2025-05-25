@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Tracker - Swipe Cards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-stack {
+            position: relative;
+            width: 350px;
+            height: 600px;
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+
+        .card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #2a2a2a;
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            touch-action: pan-y;
+            user-select: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card.next {
+            transform: scale(0.95) translateY(10px);
+            opacity: 0.7;
+            z-index: 1;
+        }
+
+        .card.current {
+            z-index: 10;
+        }
+
+        .card.prev {
+            transform: translateX(-100%) scale(0.95);
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .card.hidden {
+            transform: translateX(100%) scale(0.8);
+            opacity: 0;
+            z-index: 0;
+        }
+
+        /* Card Types */
+        .overview-card {
+            text-align: center;
+        }
+
+        .overview-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        .overview-subtitle {
+            font-size: 18px;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .exercise-preview {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 8px 0;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .exercise-preview-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .exercise-preview-target {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        /* Exercise Cards */
+        .exercise-card {
+            text-align: center;
+        }
+
+        .card-header {
+            margin-bottom: 40px;
+        }
+
+        .round-info {
+            font-size: 14px;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .exercise-name {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .exercise-target {
+            font-size: 18px;
+            color: #aaa;
+        }
+
+        .view-history-btn {
+            background: #333;
+            border: none;
+            color: #4CAF50;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .view-history-btn:hover {
+            background: #444;
+        }
+
+        .history-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .history-content {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            width: 90%;
+            max-width: 350px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .history-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #444;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-date {
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .history-performance {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .close-history-btn {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .input-section {
+            margin: 40px 0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .input-field {
+            flex: 1;
+            text-align: center;
+        }
+
+        .input-field label {
+            display: block;
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .input-field input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 15px;
+            color: #fff;
+            font-size: 24px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .previous-weight {
+            background: #333;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .previous-weight-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .previous-weight-value {
+            font-size: 16px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        /* Complete Card */
+        .complete-card {
+            text-align: center;
+        }
+
+        .complete-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .complete-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+
+        .complete-subtitle {
+            font-size: 18px;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .workout-stats {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Progress Indicator */
+        .progress-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: #444;
+            transition: background 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: #4CAF50;
+        }
+
+        .progress-dot.completed {
+            background: #4CAF50;
+        }
+
+        /* Swipe Instructions */
+        .swipe-hint {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+
+        /* Navigation Arrows */
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 20;
+            transition: background 0.2s;
+        }
+
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .nav-arrow.left {
+            left: 20px;
+        }
+
+        .nav-arrow.right {
+            right: 20px;
+        }
+
+        .nav-arrow:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card-stack" id="cardStack">
+            <!-- Overview Card -->
+            <div class="card overview-card current" data-card="0">
+                <div class="overview-title">Triset A</div>
+                <div class="overview-subtitle">3 Rounds</div>
+                
+                <div class="exercise-preview">
+                    <div class="exercise-preview-name">1. Push-ups</div>
+                    <div class="exercise-preview-target">12 reps</div>
+                </div>
+                
+                <div class="exercise-preview">
+                    <div class="exercise-preview-name">2. Dumbbell Rows</div>
+                    <div class="exercise-preview-target">30 lbs × 10 reps</div>
+                </div>
+                
+                <div class="exercise-preview">
+                    <div class="exercise-preview-name">3. Plank</div>
+                    <div class="exercise-preview-target">30 seconds</div>
+                </div>
+            </div>
+
+            <!-- Round 1 Cards -->
+            <div class="card exercise-card next" data-card="1" data-exercise="pushups" data-round="1">
+                <div class="card-header">
+                    <div class="round-info">Round 1 of 3</div>
+                    <div class="exercise-name">Push-ups</div>
+                    <div class="exercise-target">12 reps</div>
+                </div>
+                
+                <div class="input-section">
+                    <div class="input-group">
+                        <div class="input-field">
+                            <label>Weight (lbs)</label>
+                            <input type="number" value="0" step="5" placeholder="BW">
+                        </div>
+                        <div class="input-field">
+                            <label>Reps</label>
+                            <input type="number" step="1" placeholder="12">
+                        </div>
+                    </div>
+                    
+                    <button class="view-history-btn" onclick="showHistory('pushups')">View History</button>
+                </div>
+            </div>
+
+            <div class="card exercise-card hidden" data-card="2" data-exercise="rows" data-round="1">
+                <div class="card-header">
+                    <div class="round-info">Round 1 of 3</div>
+                    <div class="exercise-name">Dumbbell Rows</div>
+                    <div class="exercise-target">10 reps</div>
+                </div>
+                
+                <div class="input-section">
+                    <div class="input-group">
+                        <div class="input-field">
+                            <label>Weight (lbs)</label>
+                            <input type="number" value="30" step="5">
+                        </div>
+                        <div class="input-field">
+                            <label>Reps</label>
+                            <input type="number" step="1" placeholder="10">
+                        </div>
+                    </div>
+                    
+                    <button class="view-history-btn" onclick="showHistory('rows')">View History</button>
+                </div>
+            </div>
+
+            <div class="card exercise-card hidden" data-card="3" data-exercise="plank" data-round="1">
+                <div class="card-header">
+                    <div class="round-info">Round 1 of 3</div>
+                    <div class="exercise-name">Plank</div>
+                    <div class="exercise-target">30 seconds</div>
+                </div>
+                
+                <div class="input-section">
+                    <div class="input-group">
+                        <div class="input-field">
+                            <label>Weight (lbs)</label>
+                            <input type="number" value="0" step="5" placeholder="BW">
+                        </div>
+                        <div class="input-field">
+                            <label>Time (sec)</label>
+                            <input type="number" step="5" placeholder="30">
+                        </div>
+                    </div>
+                    
+                    <button class="view-history-btn" onclick="showHistory('plank')">View History</button>
+                </div>
+            </div>
+
+            <!-- Round 2 Cards (abbreviated for demo) -->
+            <div class="card exercise-card hidden" data-card="4" data-exercise="pushups" data-round="2">
+                <div class="card-header">
+                    <div class="round-info">Round 2 of 3</div>
+                    <div class="exercise-name">Push-ups</div>
+                    <div class="exercise-target">12 reps</div>
+                </div>
+                
+                <div class="input-section">
+                    <div class="input-group">
+                        <div class="input-field">
+                            <label>Weight (lbs)</label>
+                            <input type="number" value="0" step="5" placeholder="BW">
+                        </div>
+                        <div class="input-field">
+                            <label>Reps</label>
+                            <input type="number" step="1" placeholder="12">
+                        </div>
+                    </div>
+                    
+                    <button class="view-history-btn" onclick="showHistory('pushups')">View History</button>
+                </div>
+            </div>
+
+            <!-- More cards would continue here... -->
+            
+            <!-- Complete Card -->
+            <div class="card complete-card hidden" data-card="10">
+                <div class="complete-icon">🎉</div>
+                <div class="complete-title">Triset Complete!</div>
+                <div class="complete-subtitle">Great work, Katie!</div>
+                
+                <div class="workout-stats">
+                    <div class="stat-item">
+                        <span>Exercises Completed</span>
+                        <span>9/9</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Triset Duration</span>
+                        <span>12 min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- History Modal -->
+        <div class="history-modal" id="historyModal">
+            <div class="history-content">
+                <div class="history-header" id="historyExerciseName">Exercise History</div>
+                <div id="historyList">
+                    <!-- History items will be populated here -->
+                </div>
+                <button class="close-history-btn" onclick="hideHistory()">Close</button>
+            </div>
+        </div>
+
+        <!-- Navigation Arrows -->
+        <button class="nav-arrow left" id="prevBtn" onclick="previousCard()">‹</button>
+        <button class="nav-arrow right" id="nextBtn" onclick="nextCard()">›</button>
+
+        <!-- Progress Dots -->
+        <div class="progress-dots" id="progressDots"></div>
+        
+        <!-- Swipe Hint -->
+        <div class="swipe-hint">
+            Swipe left/right or use arrows to navigate
+        </div>
+    </div>
+
+    <script>
+        let currentCardIndex = 0;
+        const totalCards = 11; // Overview + 9 exercises + complete
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let isDragging = false;
+        let workoutStartTime = null;
+        let workoutDuration = 0;
+
+        // Initialize progress dots
+        function initProgressDots() {
+            const dotsContainer = document.getElementById('progressDots');
+            for (let i = 0; i < totalCards; i++) {
+                const dot = document.createElement('div');
+                dot.className = i === 0 ? 'progress-dot active' : 'progress-dot';
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+        // Update card positions
+        function updateCards() {
+            const cards = document.querySelectorAll('.card');
+            
+            cards.forEach((card, index) => {
+                card.classList.remove('prev', 'current', 'next', 'hidden');
+                
+                if (index === currentCardIndex) {
+                    card.classList.add('current');
+                } else if (index === currentCardIndex + 1) {
+                    card.classList.add('next');
+                } else if (index === currentCardIndex - 1) {
+                    card.classList.add('prev');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            // Update progress dots
+            const dots = document.querySelectorAll('.progress-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index < currentCardIndex) {
+                    dot.classList.add('completed');
+                } else if (index === currentCardIndex) {
+                    dot.classList.add('active');
+                }
+            });
+
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentCardIndex === 0;
+            document.getElementById('nextBtn').disabled = currentCardIndex === totalCards - 1;
+        }
+
+        // History modal functions
+        function showHistory(exercise) {
+            const modal = document.getElementById('historyModal');
+            const exerciseName = document.getElementById('historyExerciseName');
+            const historyList = document.getElementById('historyList');
+            
+            // Set exercise name
+            const exerciseNames = {
+                'pushups': 'Push-ups History',
+                'rows': 'Dumbbell Rows History',
+                'plank': 'Plank History'
+            };
+            exerciseName.textContent = exerciseNames[exercise] || 'Exercise History';
+            
+            // Mock history data - in real app, this would come from Google Sheets
+            const historyData = {
+                'pushups': [
+                    { date: '1 week ago', performance: 'BW × 10 reps' },
+                    { date: '2 weeks ago', performance: 'BW × 8 reps' },
+                    { date: '3 weeks ago', performance: 'BW × 12 reps' },
+                    { date: '1 month ago', performance: 'BW × 9 reps' }
+                ],
+                'rows': [
+                    { date: '1 week ago', performance: '25 lbs × 12 reps' },
+                    { date: '2 weeks ago', performance: '25 lbs × 10 reps' },
+                    { date: '3 weeks ago', performance: '20 lbs × 12 reps' },
+                    { date: '1 month ago', performance: '20 lbs × 10 reps' }
+                ],
+                'plank': [
+                    { date: '1 week ago', performance: '25 seconds' },
+                    { date: '2 weeks ago', performance: '20 seconds' },
+                    { date: '3 weeks ago', performance: '30 seconds' },
+                    { date: '1 month ago', performance: '22 seconds' }
+                ]
+            };
+            
+            // Populate history list
+            historyList.innerHTML = '';
+            const data = historyData[exercise] || [];
+            data.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-date">${item.date}</div>
+                    <div class="history-performance">${item.performance}</div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+            
+            // Show modal
+            modal.style.display = 'flex';
+        }
+        
+        function hideHistory() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        // Navigation functions
+        function nextCard() {
+            if (currentCardIndex < totalCards - 1) {
+                // Start timer when moving past overview card (card 0)
+                if (currentCardIndex === 0 && workoutStartTime === null) {
+                    workoutStartTime = Date.now();
+                    console.log('Workout timer started');
+                }
+                
+                currentCardIndex++;
+                updateCards();
+                
+                // Calculate and display duration on completion card
+                if (currentCardIndex === totalCards - 1) {
+                    calculateWorkoutDuration();
+                }
+                
+                // Auto-populate next round data from previous round
+                if (currentCardIndex > 3) {
+                    populateFromPreviousRound();
+                }
+            }
+        }
+        
+        function calculateWorkoutDuration() {
+            if (workoutStartTime) {
+                const endTime = Date.now();
+                workoutDuration = Math.round((endTime - workoutStartTime) / 1000 / 60); // Convert to minutes
+                
+                // Update the completion card with actual duration
+                const durationElement = document.querySelector('.complete-card .stat-item:last-child span:last-child');
+                if (durationElement) {
+                    durationElement.textContent = `${workoutDuration} min`;
+                }
+                
+                console.log(`Workout completed in ${workoutDuration} minutes`);
+            }
+        }
+
+        function previousCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                updateCards();
+            }
+        }
+
+        // Auto-populate weights from previous rounds
+        function populateFromPreviousRound() {
+            const currentCard = document.querySelector('.card.current');
+            const exercise = currentCard.dataset.exercise;
+            const currentRound = parseInt(currentCard.dataset.round);
+            
+            if (currentRound > 1) {
+                // Find the same exercise from previous round
+                const prevRoundCard = document.querySelector(`[data-exercise="${exercise}"][data-round="${currentRound - 1}"]`);
+                if (prevRoundCard) {
+                    const prevWeight = prevRoundCard.querySelector('input[placeholder="BW"], input[value]').value;
+                    const currentWeightInput = currentCard.querySelector('input[type="number"]');
+                    if (prevWeight && currentWeightInput) {
+                        currentWeightInput.value = prevWeight;
+                    }
+                }
+            }
+        }
+
+        // Touch handling for swipes
+        function handleTouchStart(e) {
+            touchStartX = e.changedTouches[0].screenX;
+            isDragging = true;
+        }
+
+        function handleTouchEnd(e) {
+            if (!isDragging) return;
+            
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+            isDragging = false;
+        }
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const swipeDistance = touchStartX - touchEndX;
+            
+            if (Math.abs(swipeDistance) > swipeThreshold) {
+                if (swipeDistance > 0) {
+                    // Swiped left - next card
+                    nextCard();
+                } else {
+                    // Swiped right - previous card
+                    previousCard();
+                }
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initProgressDots();
+            updateCards();
+            
+            const cardStack = document.getElementById('cardStack');
+            cardStack.addEventListener('touchstart', handleTouchStart, { passive: true });
+            cardStack.addEventListener('touchend', handleTouchEnd, { passive: true });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') previousCard();
+                if (e.key === 'ArrowRight') nextCard();
+            });
+        });
+
+        // Auto-focus inputs when card becomes active
+        function focusCurrentInput() {
+            const currentCard = document.querySelector('.card.current');
+            const input = currentCard.querySelector('input[placeholder]:not([placeholder="BW"])');
+            if (input) {
+                setTimeout(() => input.focus(), 300);
+            }
+        }
+
+        // Update the updateCards function to include auto-focus
+        const originalUpdateCards = updateCards;
+        updateCards = function() {
+            originalUpdateCards();
+            focusCurrentInput();
+        };
+    </script>
+</body>
+</html>
