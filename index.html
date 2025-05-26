@@ -747,11 +747,13 @@
         // CARD GENERATION AND NAVIGATION
         // ===============================
         async function generateCards() {
+            console.log('🔄 generateCards() called');
             const container = document.getElementById('cardsContainer');
             container.innerHTML = '';
 
             // If no workout selected, show selection screen
             if (!selectedWorkout) {
+                console.log('📝 No workout selected, showing selection card');
                 container.appendChild(await createWorkoutSelectionCard());
                 totalCards = 1;
                 generateProgressDots();
@@ -759,25 +761,50 @@
                 return;
             }
 
+            console.log('💪 Workout selected:', selectedWorkout.plan_name);
+            console.log('🏗️ Workout structure:', workoutStructure);
+
             // Calculate total cards: Selection + (exercises × rounds) + Completion
             totalCards = 1 + workoutStructure.totalExercises + 1;
+            console.log('📊 Total cards to generate:', totalCards);
 
-            // Generate Selection Card (shows selected workout)
-            container.appendChild(createSelectedWorkoutCard());
+            try {
+                // Generate Selection Card (shows selected workout)
+                console.log('🎯 Creating selected workout card...');
+                container.appendChild(createSelectedWorkoutCard());
 
-            // Generate Exercise Cards
-            workoutStructure.exercises.forEach(exercise => {
-                container.appendChild(createExerciseCard(exercise));
-            });
+                // Generate Exercise Cards
+                console.log('🏋️ Creating exercise cards...', workoutStructure.exercises.length);
+                workoutStructure.exercises.forEach((exercise, index) => {
+                    console.log(`Creating exercise card ${index + 1}:`, exercise.exercise_name);
+                    container.appendChild(createExerciseCard(exercise));
+                });
 
-            // Generate Completion Card
-            container.appendChild(createCompletionCard());
+                // Generate Completion Card
+                console.log('🎉 Creating completion card...');
+                container.appendChild(createCompletionCard());
 
-            // Generate progress dots
-            generateProgressDots();
+                // Generate progress dots
+                console.log('🔵 Generating progress dots...');
+                generateProgressDots();
 
-            // Show first card
-            showCard(0);
+                // Show first card
+                console.log('👁️ Showing first card...');
+                showCard(0);
+                
+                console.log('✅ All cards generated successfully');
+            } catch (error) {
+                console.error('❌ Error in generateCards:', error);
+                container.innerHTML = `
+                    <div class="card">
+                        <h1>❌ Error</h1>
+                        <div class="error">
+                            Error generating cards: ${error.message}
+                        </div>
+                        <button class="btn" onclick="resetWorkout()">Try Again</button>
+                    </div>
+                `;
+            }
         }
 
         async function createWorkoutSelectionCard() {
@@ -961,9 +988,12 @@
         // WORKOUT SELECTION FUNCTIONS
         // ===============================
         async function onWorkoutSelected() {
+            console.log('🎯 onWorkoutSelected() called');
             const select = document.getElementById('workoutSelect');
             const detailsDiv = document.getElementById('workoutDetails');
             const loadingDiv = document.getElementById('loadingStatus');
+            
+            console.log('📋 Selected value:', select.value);
             
             if (!select.value) {
                 detailsDiv.innerHTML = '';
@@ -972,6 +1002,8 @@
             
             // Show workout details
             const workout = availableWorkouts.find(w => w.plan_id === select.value);
+            console.log('🔍 Found workout:', workout);
+            
             if (workout) {
                 detailsDiv.innerHTML = `
                     <div style="margin-top: 1rem;">
@@ -985,12 +1017,19 @@
             // Load the full workout plan
             loadingDiv.style.display = 'block';
             try {
+                console.log('📥 Loading workout plan:', select.value);
                 await loadWorkoutPlan(select.value);
+                console.log('✅ Workout plan loaded successfully');
+                
                 loadingDiv.style.display = 'none';
                 
                 // Regenerate cards with the new workout
+                console.log('🔄 Regenerating cards...');
                 await generateCards();
+                console.log('✅ Cards regenerated successfully');
+                
             } catch (error) {
+                console.error('❌ Error in onWorkoutSelected:', error);
                 loadingDiv.innerHTML = `<div class="error">Error loading workout: ${error.message}</div>`;
             }
         }
