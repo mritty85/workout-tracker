@@ -1,20 +1,74 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-900">
+<html lang="en" class="bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Workout Tracker</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- Plus Jakarta Sans font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            /* Light theme color palette */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #e2e8f0;
+            --bg-accent: #f1f5f9;
+            
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --text-muted: #94a3b8;
+            
+            --accent-primary: #3b82f6;
+            --accent-secondary: #1d4ed8;
+            --accent-light: #dbeafe;
+            
+            --success: #059669;
+            --success-light: #d1fae5;
+            --warning: #d97706;
+            --warning-light: #fed7aa;
+            --error: #dc2626;
+            --error-light: #fee2e2;
+            
+            --border-light: #e2e8f0;
+            --border-medium: #cbd5e1;
+            --border-strong: #94a3b8;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            
+            --font-primary: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #111827; 
-            color: white; 
+            font-family: var(--font-primary);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             overflow: hidden;
             height: 100vh;
             touch-action: manipulation;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         .workout-container {
@@ -23,6 +77,7 @@
             flex-direction: column;
             position: relative;
             overflow: hidden;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
         }
         
         .cards-container {
@@ -37,7 +92,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            background: var(--bg-primary);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -46,171 +101,271 @@
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 0;
             text-align: center;
+            box-shadow: inset 0 0 0 1px var(--border-light);
         }
         
-        .card h1 { font-size: 2.5rem; margin-bottom: 1rem; color: #60a5fa; }
-        .card h2 { font-size: 2rem; margin-bottom: 0.5rem; color: #f3f4f6; }
-        .card h3 { font-size: 1.25rem; margin-bottom: 2rem; color: #9ca3af; }
+        .card h1 { 
+            font-size: 2.5rem; 
+            font-weight: 700;
+            margin-bottom: 1rem; 
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
+        .card h2 { 
+            font-size: 2rem; 
+            font-weight: 600;
+            margin-bottom: 0.5rem; 
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+        
+        .card h3 { 
+            font-size: 1.25rem; 
+            font-weight: 500;
+            margin-bottom: 2rem; 
+            color: var(--text-secondary);
+        }
         
         .exercise-info {
-            background: rgba(55, 65, 81, 0.5);
-            padding: 1.5rem;
-            border-radius: 12px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-light);
+            padding: 2rem;
             margin-bottom: 2rem;
             width: 100%;
-            max-width: 300px;
+            max-width: 380px;
+            backdrop-filter: blur(10px);
         }
         
         .workout-selector {
-            background: rgba(55, 65, 81, 0.5);
-            padding: 1.5rem;
-            border-radius: 12px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-light);
+            padding: 2rem;
             margin-bottom: 2rem;
             width: 100%;
-            max-width: 350px;
+            max-width: 380px;
         }
         
         .workout-selector select {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #374151;
-            border-radius: 8px;
-            background: #1f2937;
-            color: white;
+            padding: 14px;
+            border: 2px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-primary);
             font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
         
         .workout-selector select:focus {
             outline: none;
-            border-color: #60a5fa;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-light);
         }
         
         .workout-details {
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             text-align: left;
-            font-size: 0.9rem;
-            color: #9ca3af;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .workout-details > div {
+            margin-bottom: 0.5rem;
         }
         
         .round-indicator {
             font-size: 1.5rem;
-            color: #10b981;
+            color: var(--success);
             margin-bottom: 1rem;
-            font-weight: bold;
+            font-weight: 600;
+            background: var(--success-light);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-lg);
+            display: inline-block;
         }
         
         .block-indicator {
             font-size: 1rem;
-            color: #60a5fa;
+            color: var(--accent-primary);
             margin-bottom: 0.5rem;
             text-transform: capitalize;
+            font-weight: 600;
+            background: var(--accent-light);
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            display: inline-block;
         }
         
         .input-group {
             margin: 1rem 0;
             width: 100%;
-            max-width: 200px;
+            max-width: 220px;
         }
         
         .input-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #d1d5db;
-            font-size: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
         }
         
         .input-group input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #374151;
-            border-radius: 8px;
-            background: #1f2937;
-            color: white;
+            padding: 14px;
+            border: 2px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-primary);
             font-size: 1.25rem;
+            font-weight: 500;
             text-align: center;
+            transition: all 0.2s ease;
         }
         
         .input-group input:focus {
             outline: none;
-            border-color: #60a5fa;
-            background: #111827;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-light);
+            background: var(--bg-primary);
+        }
+        
+        .input-group input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
         }
         
         .btn {
-            background: #3b82f6;
+            background: var(--accent-primary);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 14px 24px;
+            border-radius: var(--radius-md);
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            font-weight: 500;
             cursor: pointer;
             margin: 0.5rem;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            letter-spacing: 0.01em;
         }
         
-        .btn:hover { background: #2563eb; }
-        .btn:disabled { background: #6b7280; cursor: not-allowed; }
+        .btn:hover { 
+            background: var(--accent-secondary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled { 
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
         
         .btn-secondary {
-            background: #6b7280;
-            color: white;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-medium);
         }
         
-        .btn-secondary:hover { background: #4b5563; }
+        .btn-secondary:hover { 
+            background: var(--border-medium);
+            color: var(--text-primary);
+        }
         
         .navigation {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 2rem;
-            background: rgba(17, 24, 39, 0.95);
-            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-light);
+            box-shadow: var(--shadow-lg);
         }
         
         .nav-button {
-            background: none;
-            border: 2px solid #374151;
-            color: #9ca3af;
-            width: 50px;
-            height: 50px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-medium);
+            color: var(--text-secondary);
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             font-size: 1.5rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
         }
         
         .nav-button:hover {
-            border-color: #60a5fa;
-            color: #60a5fa;
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        
+        .nav-button:active {
+            transform: translateY(0);
         }
         
         .nav-button:disabled {
-            border-color: #374151;
-            color: #6b7280;
+            border-color: var(--border-light);
+            color: var(--text-muted);
             cursor: not-allowed;
+            transform: none;
+            box-shadow: var(--shadow-sm);
         }
         
         .progress-dots {
             display: flex;
-            gap: 8px;
+            gap: 10px;
+            align-items: center;
         }
         
         .dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: #374151;
-            transition: background 0.3s;
+            background: var(--border-medium);
+            transition: all 0.3s ease;
         }
         
-        .dot.active { background: #60a5fa; }
-        .dot.completed { background: #10b981; }
+        .dot.active { 
+            background: var(--accent-primary);
+            transform: scale(1.2);
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+        
+        .dot.completed { 
+            background: var(--success);
+            transform: scale(1.1);
+        }
         
         .timer {
-            font-size: 1.25rem;
-            color: #10b981;
+            font-size: 1.5rem;
+            color: var(--success);
             margin-bottom: 1rem;
-            font-weight: bold;
+            font-weight: 600;
+            background: var(--success-light);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-lg);
+            display: inline-block;
         }
         
         .history-modal {
@@ -219,46 +374,63 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.5);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            backdrop-filter: blur(4px);
         }
         
         .modal-content {
-            background: #1f2937;
+            background: var(--bg-primary);
             padding: 2rem;
-            border-radius: 12px;
+            border-radius: var(--radius-xl);
             max-width: 90%;
             max-height: 80%;
             overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-light);
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
         }
         
         .history-entry {
             padding: 1rem;
-            border-bottom: 1px solid #374151;
+            border-bottom: 1px solid var(--border-light);
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-entry:last-child {
+            border-bottom: none;
         }
         
         .loading {
-            color: #60a5fa;
-            font-style: italic;
+            color: var(--accent-primary);
+            font-style: normal;
+            font-weight: 500;
         }
         
         .error {
-            color: #ef4444;
+            color: var(--error);
             padding: 1rem;
-            background: rgba(239, 68, 68, 0.1);
-            border-radius: 8px;
+            background: var(--error-light);
+            border: 1px solid var(--error);
+            border-radius: var(--radius-md);
             margin: 1rem 0;
+            font-weight: 500;
         }
         
         .success {
-            color: #10b981;
-            font-size: 1.1rem;
-            font-weight: bold;
+            color: var(--success);
+            font-size: 1rem;
+            font-weight: 600;
         }
         
         /* Touch/swipe styles */
@@ -276,8 +448,103 @@
 
         /* Block transition styles */
         .block-transition {
-            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-            border: 2px solid #60a5fa;
+            background: linear-gradient(135deg, var(--accent-light) 0%, var(--bg-primary) 100%);
+            border: 2px solid var(--accent-primary);
+        }
+        
+        /* Enhanced workout structure display */
+        .workout-structure {
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+        
+        .workout-structure-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        
+        .workout-block {
+            margin: 0.75rem 0;
+            padding: 1rem;
+            background: var(--bg-accent);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+        }
+        
+        .workout-block-header {
+            color: var(--accent-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .workout-exercise {
+            margin: 0.25rem 0;
+            margin-left: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        /* Typography improvements */
+        .card-subtitle {
+            color: var(--text-tertiary);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+        
+        .exercise-target {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .exercise-instructions {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-style: italic;
+        }
+        
+        .exercise-notes {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--warning);
+            background: var(--warning-light);
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            border-left: 3px solid var(--warning);
+        }
+        
+        /* Improved focus states for accessibility */
+        *:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+        
+        /* Responsive improvements */
+        @media (max-width: 480px) {
+            .card {
+                padding: 1.5rem;
+            }
+            
+            .card h1 {
+                font-size: 2rem;
+            }
+            
+            .card h2 {
+                font-size: 1.75rem;
+            }
+            
+            .exercise-info,
+            .workout-selector {
+                max-width: 100%;
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -308,7 +575,7 @@
         // API CONFIGURATION
         // ===============================
         const API_CONFIG = {
-            BASE_URL: 'https://script.google.com/macros/s/AKfycbxNB3X2CGnkjuhs1q7j51WP1wRD0caH4TLTuegsZ-fNeFmFkNPSewavflg1SEvMNdPIkg/exec',
+            BASE_URL: 'https://script.google.com/macros/s/AKfycbxk9Xw-iIDk_sLXMqioGZFzqO5LrKqBZImc2fTe5ToU6NTtjhsHtjZFUNwnFZ2yeAM/exec',
             USER_ID: 'katie'
         };
 
@@ -523,7 +790,7 @@
                 card.innerHTML = `
                     <h1>💪 Choose Your Workout</h1>
                     <div class="workout-selector">
-                        <label for="workoutSelect" style="display: block; margin-bottom: 1rem; color: #d1d5db;">
+                        <label for="workoutSelect" style="display: block; margin-bottom: 1rem; color: var(--text-secondary); font-weight: 500;">
                             Select Workout Plan:
                         </label>
                         <select id="workoutSelect" onchange="onWorkoutSelected()">
@@ -534,6 +801,9 @@
                         </select>
                         <div id="workoutDetails" class="workout-details"></div>
                     </div>
+                    <p class="card-subtitle">
+                        Choose from Katie's custom workout plans
+                    </p>
                     <div id="loadingStatus" class="loading" style="display: none;">
                         Loading workout...
                     </div>
@@ -561,73 +831,19 @@
             card.innerHTML = `
                 <h1>💪 ${selectedWorkout.plan_name}</h1>
                 <div class="exercise-info">
-                    <h3>${selectedWorkout.description}</h3>
-                    <div style="text-align: left; margin-top: 1rem;">
-                        <div><strong>Blocks:</strong> ${totalBlocks}</div>
-                        <div><strong>Total Exercises:</strong> ${totalExercises}</div>
-                        <div><strong>Estimated Time:</strong> ${selectedWorkout.estimated_duration} min</div>
-                        <div><strong>Difficulty:</strong> ${selectedWorkout.difficulty_level}</div>
-                    </div>
-                    
-                    <div style="margin-top: 1.5rem; text-align: left;">
-                        <strong>Workout Structure:</strong>
-                        ${selectedWorkout.blocks.map((block, i) => `
-                            <div style="margin: 0.5rem 0; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
-                                <div style="color: #60a5fa; font-weight: bold;">
-                                    Block ${i + 1}: ${block.block_type.toUpperCase()} (${block.rounds} rounds)
-                                </div>
-                                ${block.exercises.map(ex => 
-                                    `<div style="margin-left: 1rem; font-size: 0.9rem;">
-                                        • ${ex.exercise_name} ${ex.is_timed ? `(${ex.target_time}s)` : `(${ex.target_reps} reps)`}
-                                    </div>`
-                                ).join('')}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <p style="color: #9ca3af; margin-bottom: 2rem;">
-                    Swipe right to start your workout
-                </p>
-                <div id="workoutStatus" class="loading" style="display: none;">
-                    Starting workout...
-                </div>
-            `;
-            return card;
-        }
-
-        function createExerciseCard(exercise) {
-            const card = document.createElement('div');
-            card.className = 'card';
-            
-            const exerciseKey = `${exercise.exercise_id}_${exercise.block_index}_${exercise.round}`;
-            const previousData = exerciseData[exerciseKey] || {};
-
-            // Check if this is the first exercise of a new block
-            const isNewBlock = exercise.exercise_index_in_block === 0 && exercise.round === 1;
-            const blockInfo = isNewBlock ? `
-                <div class="block-indicator">
-                    ${exercise.block_type} Block ${exercise.block_order}
-                </div>
-            ` : '';
-
-            card.innerHTML = `
-                ${blockInfo}
-                <div class="round-indicator">
-                    Round ${exercise.round} of ${exercise.total_rounds}
-                </div>
-                <h2>${exercise.exercise_name}</h2>
-                <div class="exercise-info">
-                    <div style="margin-bottom: 1rem;">
-                        <strong>Target:</strong> ${exercise.is_timed ? `${exercise.target_time} seconds` : `${exercise.target_reps} reps`}
-                        ${exercise.target_weight > 0 ? `<br><strong>Suggested Weight:</strong> ${exercise.target_weight} lbs` : ''}
+                    <div style="margin-bottom: 1.5rem;">
+                        <div class="exercise-target">
+                            Target: ${exercise.is_timed ? `${exercise.target_time} seconds` : `${exercise.target_reps} reps`}
+                        </div>
+                        ${exercise.target_weight > 0 ? `<div><strong>Suggested Weight:</strong> ${exercise.target_weight} lbs</div>` : ''}
                     </div>
                     ${exercise.instructions ? `
-                        <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #9ca3af;">
+                        <div class="exercise-instructions">
                             <strong>Form:</strong> ${exercise.instructions}
                         </div>
                     ` : ''}
                     ${exercise.notes ? `
-                        <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #fbbf24;">
+                        <div class="exercise-notes">
                             <strong>Note:</strong> ${exercise.notes}
                         </div>
                     ` : ''}
@@ -667,7 +883,7 @@
                 <h1>🎉 Workout Complete!</h1>
                 <div class="timer" id="finalTime">--:--</div>
                 <div class="exercise-info">
-                    <h3>Great job!</h3>
+                    <h3>Great job, Katie!</h3>
                     <p>Your ${selectedWorkout.plan_name} workout has been saved.</p>
                 </div>
                 <div id="completionStatus" class="loading" style="display: none;">
@@ -957,7 +1173,7 @@
                         </div>
                     `).join('');
                 } else {
-                    content.innerHTML = '<div style="text-align: center; color: #9ca3af;">No previous data found</div>';
+                    content.innerHTML = '<div style="text-align: center; color: var(--text-tertiary);">No previous data found</div>';
                 }
             } catch (error) {
                 content.innerHTML = `<div class="error">Error loading history: ${error.message}</div>`;
@@ -1017,7 +1233,7 @@
         // INITIALIZATION
         // ===============================
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🏋️ Workout Tracker - Flexible Structure Loaded');
+            console.log('🏋️ Workout Tracker - Light Design with Plus Jakarta Sans');
             console.log('API URL:', API_CONFIG.BASE_URL);
             
             try {
@@ -1042,3 +1258,59 @@
     </script>
 </body>
 </html>
+                    <h3>${selectedWorkout.description}</h3>
+                    <div style="text-align: left; margin-top: 1rem;">
+                        <div><strong>Blocks:</strong> ${totalBlocks}</div>
+                        <div><strong>Total Exercises:</strong> ${totalExercises}</div>
+                        <div><strong>Estimated Time:</strong> ${selectedWorkout.estimated_duration} min</div>
+                        <div><strong>Difficulty:</strong> ${selectedWorkout.difficulty_level}</div>
+                    </div>
+                    
+                    <div class="workout-structure">
+                        <div class="workout-structure-title">Workout Structure:</div>
+                        ${selectedWorkout.blocks.map((block, i) => `
+                            <div class="workout-block">
+                                <div class="workout-block-header">
+                                    Block ${i + 1}: ${block.block_type.toUpperCase()} (${block.rounds} rounds)
+                                </div>
+                                ${block.exercises.map(ex => 
+                                    `<div class="workout-exercise">
+                                        • ${ex.exercise_name} ${ex.is_timed ? `(${ex.target_time}s)` : `(${ex.target_reps} reps)`}
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <p class="card-subtitle">
+                    Swipe right to start your workout
+                </p>
+                <div id="workoutStatus" class="loading" style="display: none;">
+                    Starting workout...
+                </div>
+            `;
+            return card;
+        }
+
+        function createExerciseCard(exercise) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const exerciseKey = `${exercise.exercise_id}_${exercise.block_index}_${exercise.round}`;
+            const previousData = exerciseData[exerciseKey] || {};
+
+            // Check if this is the first exercise of a new block
+            const isNewBlock = exercise.exercise_index_in_block === 0 && exercise.round === 1;
+            const blockInfo = isNewBlock ? `
+                <div class="block-indicator">
+                    ${exercise.block_type} Block ${exercise.block_order}
+                </div>
+            ` : '';
+
+            card.innerHTML = `
+                ${blockInfo}
+                <div class="round-indicator">
+                    Round ${exercise.round} of ${exercise.total_rounds}
+                </div>
+                <h2>${exercise.exercise_name}</h2>
+                <div class="exercise-info">
