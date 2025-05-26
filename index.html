@@ -61,11 +61,49 @@
             max-width: 300px;
         }
         
+        .workout-selector {
+            background: rgba(55, 65, 81, 0.5);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 350px;
+        }
+        
+        .workout-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #374151;
+            border-radius: 8px;
+            background: #1f2937;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .workout-selector select:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+        
+        .workout-details {
+            margin-top: 1rem;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+        
         .round-indicator {
             font-size: 1.5rem;
             color: #10b981;
             margin-bottom: 1rem;
             font-weight: bold;
+        }
+        
+        .block-indicator {
+            font-size: 1rem;
+            color: #60a5fa;
+            margin-bottom: 0.5rem;
+            text-transform: capitalize;
         }
         
         .input-group {
@@ -235,6 +273,12 @@
         .card-exit {
             transform: translateX(-100%);
         }
+
+        /* Block transition styles */
+        .block-transition {
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            border: 2px solid #60a5fa;
+        }
     </style>
 </head>
 <body>
@@ -265,14 +309,13 @@
         // ===============================
         const API_CONFIG = {
             BASE_URL: 'https://script.google.com/macros/s/AKfycbxk9Xw-iIDk_sLXMqioGZFzqO5LrKqBZImc2fTe5ToU6NTtjhsHtjZFUNwnFZ2yeAM/exec',
-            USER_ID: 'katie',
-            WORKOUT_TYPE: 'triset'
+            USER_ID: 'katie'
         };
 
         // ===============================
         // API FUNCTIONS
         // ===============================
-        async function apiCall(action, data = {}, method = 'POST') {
+        async function apiCall(action, data = {}, method = 'GET') {
             try {
                 let url = API_CONFIG.BASE_URL;
                 let options = {};
@@ -289,19 +332,10 @@
                     };
                 }
 
-                console.log('Making API call:', {
-                    action,
-                    method,
-                    url,
-                    data
-                });
+                console.log('Making API call:', { action, method, data });
                 
                 const response = await fetch(url, options);
-                console.log('API response received:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    ok: response.ok
-                });
+                console.log('API response received:', response.status, response.ok);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -316,13 +350,8 @@
 
                 return result.data;
             } catch (error) {
-                console.error('API call failed:', {
-                    action,
-                    error: error.message,
-                    stack: error.stack
-                });
+                console.error('API call failed:', { action, error: error.message });
                 
-                // Provide more specific error messages
                 if (error.name === 'TypeError' && error.message.includes('fetch')) {
                     throw new Error('Network connection failed');
                 } else if (error.message.includes('JSON')) {
@@ -333,16 +362,24 @@
             }
         }
 
-        async function startWorkout() {
-            // Use GET request instead of POST to avoid 405 error
+        // New API functions for workout plans
+        async function getAvailableWorkoutPlans() {
+            return await apiCall('get_available_workout_plans', {}, 'GET');
+        }
+
+        async function getWorkoutPlan(planId) {
+            return await apiCall('get_workout_plan', { plan_id: planId }, 'GET');
+        }
+
+        // Existing API functions
+        async function startWorkout(planId) {
             return await apiCall('start_workout', {
                 user_id: API_CONFIG.USER_ID,
-                workout_type: API_CONFIG.WORKOUT_TYPE
+                workout_type: planId
             }, 'GET');
         }
 
         async function logExercise(workoutId, exerciseData) {
-            // Use GET request instead of POST to avoid 405 error
             return await apiCall('log_exercise', {
                 workout_id: workoutId,
                 exercise_id: exerciseData.exercise_id,
@@ -355,7 +392,6 @@
         }
 
         async function completeWorkout(workoutId) {
-            // Use GET request instead of POST to avoid 405 error
             return await apiCall('complete_workout', {
                 workout_id: workoutId
             }, 'GET');
@@ -368,22 +404,6 @@
             }, 'GET');
         }
 
-        async function getExerciseLibrary() {
-            return await apiCall('get_exercise_library', {}, 'GET');
-        }
-
-        // ===============================
-        // WORKOUT STRUCTURE
-        // ===============================
-        const WORKOUT_STRUCTURE = {
-            exercises: [
-                { id: 'pushups', name: 'Push-ups', target_reps: 12, is_timed: false },
-                { id: 'rows', name: 'Dumbbell Rows', target_reps: 10, is_timed: false },
-                { id: 'plank', name: 'Plank', target_time: 30, is_timed: true }
-            ],
-            rounds: 3
-        };
-
         // ===============================
         // APP STATE
         // ===============================
@@ -394,26 +414,94 @@
         let startTime = null;
         let exerciseData = {};
         let isLoading = false;
+        let availableWorkouts = [];
+        let selectedWorkout = null;
+        let workoutStructure = null;
+
+        // ===============================
+        // WORKOUT PLAN LOADING
+        // ===============================
+        async function loadAvailableWorkouts() {
+            try {
+                console.log('Loading available workouts...');
+                const result = await getAvailableWorkoutPlans();
+                availableWorkouts = result.plans || [];
+                console.log('Loaded workouts:', availableWorkouts);
+                return availableWorkouts;
+            } catch (error) {
+                console.error('Error loading workouts:', error);
+                throw error;
+            }
+        }
+
+        async function loadWorkoutPlan(planId) {
+            try {
+                console.log('Loading workout plan:', planId);
+                const result = await getWorkoutPlan(planId);
+                selectedWorkout = result;
+                workoutStructure = buildWorkoutStructure(result);
+                console.log('Loaded workout structure:', workoutStructure);
+                return result;
+            } catch (error) {
+                console.error('Error loading workout plan:', error);
+                throw error;
+            }
+        }
+
+        function buildWorkoutStructure(workoutPlan) {
+            const structure = {
+                plan: workoutPlan,
+                totalExercises: 0,
+                exercises: []
+            };
+
+            workoutPlan.blocks.forEach((block, blockIndex) => {
+                for (let round = 1; round <= block.rounds; round++) {
+                    block.exercises.forEach((exercise, exerciseIndex) => {
+                        structure.exercises.push({
+                            ...exercise,
+                            block_index: blockIndex,
+                            block_type: block.block_type,
+                            block_order: block.block_order,
+                            round: round,
+                            total_rounds: block.rounds,
+                            exercise_index_in_block: exerciseIndex,
+                            global_index: structure.totalExercises
+                        });
+                        structure.totalExercises++;
+                    });
+                }
+            });
+
+            return structure;
+        }
 
         // ===============================
         // CARD GENERATION AND NAVIGATION
         // ===============================
-        function generateCards() {
+        async function generateCards() {
             const container = document.getElementById('cardsContainer');
             container.innerHTML = '';
 
-            // Calculate total cards: Overview + (exercises × rounds) + Completion
-            totalCards = 1 + (WORKOUT_STRUCTURE.exercises.length * WORKOUT_STRUCTURE.rounds) + 1;
+            // If no workout selected, show selection screen
+            if (!selectedWorkout) {
+                container.appendChild(await createWorkoutSelectionCard());
+                totalCards = 1;
+                generateProgressDots();
+                showCard(0);
+                return;
+            }
 
-            // Generate Overview Card
-            container.appendChild(createOverviewCard());
+            // Calculate total cards: Selection + (exercises × rounds) + Completion
+            totalCards = 1 + workoutStructure.totalExercises + 1;
+
+            // Generate Selection Card (shows selected workout)
+            container.appendChild(createSelectedWorkoutCard());
 
             // Generate Exercise Cards
-            for (let round = 1; round <= WORKOUT_STRUCTURE.rounds; round++) {
-                for (let exercise of WORKOUT_STRUCTURE.exercises) {
-                    container.appendChild(createExerciseCard(exercise, round));
-                }
-            }
+            workoutStructure.exercises.forEach(exercise => {
+                container.appendChild(createExerciseCard(exercise));
+            });
 
             // Generate Completion Card
             container.appendChild(createCompletionCard());
@@ -425,20 +513,76 @@
             showCard(0);
         }
 
-        function createOverviewCard() {
+        async function createWorkoutSelectionCard() {
             const card = document.createElement('div');
             card.className = 'card';
-            card.innerHTML = `
-                <h1>💪 Today's Workout</h1>
-                <div class="exercise-info">
-                    <h3>Triset Workout</h3>
-                    <div style="text-align: left; margin-top: 1rem;">
-                        ${WORKOUT_STRUCTURE.exercises.map(ex => 
-                            `<div style="margin: 0.5rem 0;">• ${ex.name} ${ex.is_timed ? `(${ex.target_time}s)` : `(${ex.target_reps} reps)`}</div>`
-                        ).join('')}
+            
+            try {
+                const workouts = await loadAvailableWorkouts();
+                
+                card.innerHTML = `
+                    <h1>💪 Choose Your Workout</h1>
+                    <div class="workout-selector">
+                        <label for="workoutSelect" style="display: block; margin-bottom: 1rem; color: #d1d5db;">
+                            Select Workout Plan:
+                        </label>
+                        <select id="workoutSelect" onchange="onWorkoutSelected()">
+                            <option value="">-- Choose a workout --</option>
+                            ${workouts.map(workout => 
+                                `<option value="${workout.plan_id}">${workout.plan_name}</option>`
+                            ).join('')}
+                        </select>
+                        <div id="workoutDetails" class="workout-details"></div>
                     </div>
-                    <div style="margin-top: 1rem; color: #60a5fa;">
-                        ${WORKOUT_STRUCTURE.rounds} rounds total
+                    <div id="loadingStatus" class="loading" style="display: none;">
+                        Loading workout...
+                    </div>
+                `;
+            } catch (error) {
+                card.innerHTML = `
+                    <h1>💪 Workout Tracker</h1>
+                    <div class="error">
+                        Error loading workouts: ${error.message}
+                    </div>
+                    <button class="btn" onclick="location.reload()">Retry</button>
+                `;
+            }
+            
+            return card;
+        }
+
+        function createSelectedWorkoutCard() {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const totalBlocks = selectedWorkout.blocks.length;
+            const totalExercises = workoutStructure.totalExercises;
+            
+            card.innerHTML = `
+                <h1>💪 ${selectedWorkout.plan_name}</h1>
+                <div class="exercise-info">
+                    <h3>${selectedWorkout.description}</h3>
+                    <div style="text-align: left; margin-top: 1rem;">
+                        <div><strong>Blocks:</strong> ${totalBlocks}</div>
+                        <div><strong>Total Exercises:</strong> ${totalExercises}</div>
+                        <div><strong>Estimated Time:</strong> ${selectedWorkout.estimated_duration} min</div>
+                        <div><strong>Difficulty:</strong> ${selectedWorkout.difficulty_level}</div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; text-align: left;">
+                        <strong>Workout Structure:</strong>
+                        ${selectedWorkout.blocks.map((block, i) => `
+                            <div style="margin: 0.5rem 0; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                                <div style="color: #60a5fa; font-weight: bold;">
+                                    Block ${i + 1}: ${block.block_type.toUpperCase()} (${block.rounds} rounds)
+                                </div>
+                                ${block.exercises.map(ex => 
+                                    `<div style="margin-left: 1rem; font-size: 0.9rem;">
+                                        • ${ex.exercise_name} ${ex.is_timed ? `(${ex.target_time}s)` : `(${ex.target_reps} reps)`}
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
                 <p style="color: #9ca3af; margin-bottom: 2rem;">
@@ -451,21 +595,43 @@
             return card;
         }
 
-        function createExerciseCard(exercise, round) {
+        function createExerciseCard(exercise) {
             const card = document.createElement('div');
             card.className = 'card';
             
-            const exerciseKey = `${exercise.id}_${round}`;
+            const exerciseKey = `${exercise.exercise_id}_${exercise.block_index}_${exercise.round}`;
             const previousData = exerciseData[exerciseKey] || {};
 
+            // Check if this is the first exercise of a new block
+            const isNewBlock = exercise.exercise_index_in_block === 0 && exercise.round === 1;
+            const blockInfo = isNewBlock ? `
+                <div class="block-indicator">
+                    ${exercise.block_type} Block ${exercise.block_order}
+                </div>
+            ` : '';
+
             card.innerHTML = `
-                <div class="round-indicator">Round ${round} of ${WORKOUT_STRUCTURE.rounds}</div>
-                <h2>${exercise.name}</h2>
+                ${blockInfo}
+                <div class="round-indicator">
+                    Round ${exercise.round} of ${exercise.total_rounds}
+                </div>
+                <h2>${exercise.exercise_name}</h2>
                 <div class="exercise-info">
                     <div style="margin-bottom: 1rem;">
                         <strong>Target:</strong> ${exercise.is_timed ? `${exercise.target_time} seconds` : `${exercise.target_reps} reps`}
+                        ${exercise.target_weight > 0 ? `<br><strong>Suggested Weight:</strong> ${exercise.target_weight} lbs` : ''}
                     </div>
-                    <button class="btn btn-secondary" onclick="showExerciseHistory('${exercise.name}')" id="historyBtn_${exerciseKey}">
+                    ${exercise.instructions ? `
+                        <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #9ca3af;">
+                            <strong>Form:</strong> ${exercise.instructions}
+                        </div>
+                    ` : ''}
+                    ${exercise.notes ? `
+                        <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #fbbf24;">
+                            <strong>Note:</strong> ${exercise.notes}
+                        </div>
+                    ` : ''}
+                    <button class="btn btn-secondary" onclick="showExerciseHistory('${exercise.exercise_name}')" id="historyBtn_${exerciseKey}">
                         View History
                     </button>
                 </div>
@@ -473,8 +639,8 @@
                 ${!exercise.is_timed ? `
                     <div class="input-group">
                         <label>Weight (lbs)</label>
-                        <input type="number" id="weight_${exerciseKey}" value="${previousData.weight || ''}" 
-                               placeholder="0" min="0" step="5">
+                        <input type="number" id="weight_${exerciseKey}" value="${previousData.weight || exercise.target_weight || ''}" 
+                               placeholder="${exercise.target_weight || '0'}" min="0" step="5">
                     </div>
                     <div class="input-group">
                         <label>Reps Completed</label>
@@ -502,13 +668,13 @@
                 <div class="timer" id="finalTime">--:--</div>
                 <div class="exercise-info">
                     <h3>Great job!</h3>
-                    <p>Your workout has been saved.</p>
+                    <p>Your ${selectedWorkout.plan_name} workout has been saved.</p>
                 </div>
                 <div id="completionStatus" class="loading" style="display: none;">
                     Saving workout...
                 </div>
                 <button class="btn" onclick="resetWorkout()" style="margin-top: 2rem;">
-                    Start New Workout
+                    Choose Another Workout
                 </button>
             `;
             return card;
@@ -576,18 +742,66 @@
         }
 
         // ===============================
+        // WORKOUT SELECTION FUNCTIONS
+        // ===============================
+        async function onWorkoutSelected() {
+            const select = document.getElementById('workoutSelect');
+            const detailsDiv = document.getElementById('workoutDetails');
+            const loadingDiv = document.getElementById('loadingStatus');
+            
+            if (!select.value) {
+                detailsDiv.innerHTML = '';
+                return;
+            }
+            
+            // Show workout details
+            const workout = availableWorkouts.find(w => w.plan_id === select.value);
+            if (workout) {
+                detailsDiv.innerHTML = `
+                    <div style="margin-top: 1rem;">
+                        <div><strong>Description:</strong> ${workout.description}</div>
+                        <div><strong>Duration:</strong> ${workout.estimated_duration} minutes</div>
+                        <div><strong>Difficulty:</strong> ${workout.difficulty_level}</div>
+                    </div>
+                `;
+            }
+            
+            // Load the full workout plan
+            loadingDiv.style.display = 'block';
+            try {
+                await loadWorkoutPlan(select.value);
+                loadingDiv.style.display = 'none';
+                
+                // Regenerate cards with the new workout
+                await generateCards();
+            } catch (error) {
+                loadingDiv.innerHTML = `<div class="error">Error loading workout: ${error.message}</div>`;
+            }
+        }
+
+        // ===============================
         // NAVIGATION FUNCTIONS
         // ===============================
         async function nextCard() {
             if (currentCard >= totalCards - 1) return;
             
-            // Special handling for overview card
-            if (currentCard === 0 && !workoutStarted) {
+            // Special handling for workout selection
+            if (currentCard === 0 && !selectedWorkout) {
+                const select = document.getElementById('workoutSelect');
+                if (!select.value) {
+                    alert('Please select a workout first');
+                    return;
+                }
+                // Workout should already be loaded by onWorkoutSelected
+            }
+            
+            // Special handling for selected workout card (start workout)
+            if (currentCard === 0 && selectedWorkout && !workoutStarted) {
                 await handleWorkoutStart();
             }
             
             // Save exercise data before moving
-            if (currentCard > 0 && currentCard < totalCards - 1) {
+            if (currentCard > 0 && currentCard < totalCards - 1 && workoutStarted) {
                 await saveCurrentExercise();
             }
             
@@ -616,10 +830,9 @@
             statusEl.textContent = 'Starting workout...';
             
             try {
-                console.log('About to start workout...');
-                console.log('API URL:', API_CONFIG.BASE_URL);
+                console.log('Starting workout with plan:', selectedWorkout.plan_id);
                 
-                const result = await startWorkout();
+                const result = await startWorkout(selectedWorkout.plan_id);
                 console.log('Start workout result:', result);
                 
                 workoutId = result.workout_id;
@@ -632,37 +845,22 @@
                 console.log('Workout started successfully:', workoutId);
             } catch (error) {
                 console.error('Start workout error:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    stack: error.stack,
-                    name: error.name
-                });
                 
                 statusEl.textContent = `❌ Error starting workout: ${error.message}`;
                 statusEl.className = 'error';
-                
-                // Show more detailed error for debugging
-                if (error.message.includes('fetch')) {
-                    statusEl.textContent = '❌ Network error - check connection';
-                } else if (error.message.includes('JSON')) {
-                    statusEl.textContent = '❌ API response error';
-                } else {
-                    statusEl.textContent = `❌ Error: ${error.message}`;
-                }
                 
                 throw error;
             }
         }
 
         async function saveCurrentExercise() {
-            if (!workoutId) return;
+            if (!workoutId || !workoutStructure) return;
             
-            const cardIndex = currentCard - 1; // Subtract 1 for overview card
-            const exerciseIndex = cardIndex % WORKOUT_STRUCTURE.exercises.length;
-            const round = Math.floor(cardIndex / WORKOUT_STRUCTURE.exercises.length) + 1;
+            const exerciseIndex = currentCard - 1; // Subtract 1 for selection card
+            if (exerciseIndex < 0 || exerciseIndex >= workoutStructure.exercises.length) return;
             
-            const exercise = WORKOUT_STRUCTURE.exercises[exerciseIndex];
-            const exerciseKey = `${exercise.id}_${round}`;
+            const exercise = workoutStructure.exercises[exerciseIndex];
+            const exerciseKey = `${exercise.exercise_id}_${exercise.block_index}_${exercise.round}`;
             
             // Get form data
             const weightInput = document.getElementById(`weight_${exerciseKey}`);
@@ -670,9 +868,9 @@
             const timeInput = document.getElementById(`time_${exerciseKey}`);
             
             const exerciseData = {
-                exercise_id: exercise.id,
-                exercise_name: exercise.name,
-                round: round,
+                exercise_id: exercise.exercise_id,
+                exercise_name: exercise.exercise_name,
+                round: exercise.round,
                 weight: weightInput ? parseFloat(weightInput.value) || 0 : 0,
                 reps: repsInput ? parseInt(repsInput.value) || 0 : 0,
                 time_seconds: timeInput ? parseInt(timeInput.value) || 0 : 0
@@ -779,6 +977,8 @@
             workoutId = null;
             startTime = null;
             exerciseData = {};
+            selectedWorkout = null;
+            workoutStructure = null;
             
             generateCards();
         }
@@ -816,19 +1016,28 @@
         // ===============================
         // INITIALIZATION
         // ===============================
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🏋️ Workout Tracker - API Integrated');
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🏋️ Workout Tracker - Flexible Structure Loaded');
             console.log('API URL:', API_CONFIG.BASE_URL);
             
-            generateCards();
-            
-            // Test API connection
-            getExerciseLibrary().then(() => {
-                console.log('✅ API connection successful');
-            }).catch(error => {
-                console.error('❌ API connection failed:', error);
-                alert('Warning: API connection failed. Check console for details.');
-            });
+            try {
+                await generateCards();
+                console.log('✅ App initialized successfully');
+            } catch (error) {
+                console.error('❌ App initialization failed:', error);
+                
+                // Show error on screen
+                const container = document.getElementById('cardsContainer');
+                container.innerHTML = `
+                    <div class="card">
+                        <h1>❌ Error</h1>
+                        <div class="error">
+                            Failed to load workout app: ${error.message}
+                        </div>
+                        <button class="btn" onclick="location.reload()">Retry</button>
+                    </div>
+                `;
+            }
         });
     </script>
 </body>
