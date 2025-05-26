@@ -289,19 +289,47 @@
                     };
                 }
 
-                console.log('API Call:', action, data);
+                console.log('Making API call:', {
+                    action,
+                    method,
+                    url,
+                    data
+                });
+                
                 const response = await fetch(url, options);
+                console.log('API response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const result = await response.json();
-                console.log('API Response:', result);
+                console.log('API response parsed:', result);
 
                 if (result.status !== 200) {
-                    throw new Error(result.data?.error || 'API call failed');
+                    throw new Error(result.data?.error || `API returned status ${result.status}`);
                 }
 
                 return result.data;
             } catch (error) {
-                console.error('API Error:', error);
-                throw error;
+                console.error('API call failed:', {
+                    action,
+                    error: error.message,
+                    stack: error.stack
+                });
+                
+                // Provide more specific error messages
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    throw new Error('Network connection failed');
+                } else if (error.message.includes('JSON')) {
+                    throw new Error('Invalid API response format');
+                } else {
+                    throw error;
+                }
             }
         }
 
@@ -585,7 +613,12 @@
             statusEl.textContent = 'Starting workout...';
             
             try {
+                console.log('About to start workout...');
+                console.log('API URL:', API_CONFIG.BASE_URL);
+                
                 const result = await startWorkout();
+                console.log('Start workout result:', result);
+                
                 workoutId = result.workout_id;
                 startTime = new Date(result.start_time);
                 workoutStarted = true;
@@ -593,10 +626,27 @@
                 statusEl.textContent = '✅ Workout started!';
                 statusEl.className = 'success';
                 
-                console.log('Workout started:', workoutId);
+                console.log('Workout started successfully:', workoutId);
             } catch (error) {
+                console.error('Start workout error:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                
                 statusEl.textContent = `❌ Error starting workout: ${error.message}`;
                 statusEl.className = 'error';
+                
+                // Show more detailed error for debugging
+                if (error.message.includes('fetch')) {
+                    statusEl.textContent = '❌ Network error - check connection';
+                } else if (error.message.includes('JSON')) {
+                    statusEl.textContent = '❌ API response error';
+                } else {
+                    statusEl.textContent = `❌ Error: ${error.message}`;
+                }
+                
                 throw error;
             }
         }
