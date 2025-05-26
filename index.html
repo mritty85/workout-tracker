@@ -36,6 +36,10 @@
             --error: #dc2626;
             --error-light: #fee2e2;
             
+            --rest-primary: #ef4444;
+            --rest-light: #fef2f2;
+            --rest-bg: #fff5f5;
+            
             --border-light: #e2e8f0;
             --border-medium: #cbd5e1;
             --border-strong: #94a3b8;
@@ -122,6 +126,11 @@
             overflow: hidden;
         }
         
+        .card.rest-card {
+            background: linear-gradient(135deg, var(--rest-bg) 0%, var(--rest-light) 100%);
+            border: 2px solid var(--rest-primary);
+        }
+        
         .card h1 { 
             font-size: 1.5rem; 
             font-weight: 700;
@@ -143,6 +152,10 @@
             font-weight: 500;
             margin-bottom: 1rem; 
             color: var(--text-secondary);
+        }
+        
+        .rest-card h1 {
+            color: var(--rest-primary);
         }
         
         .exercise-info {
@@ -393,6 +406,10 @@
             transform: scale(1.1);
         }
         
+        .mobile-progress-dots .dot.rest { 
+            background: var(--rest-primary);
+        }
+        
         .dot {
             width: 8px;
             height: 8px;
@@ -412,6 +429,10 @@
             transform: scale(1.1);
         }
         
+        .dot.rest { 
+            background: var(--rest-primary);
+        }
+        
         .timer {
             font-size: 1.1rem;
             color: var(--success);
@@ -421,6 +442,105 @@
             padding: 0.5rem 1rem;
             border-radius: var(--radius-lg);
             display: inline-block;
+        }
+        
+        /* Rest Timer Styles */
+        .rest-timer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        
+        .circular-timer {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .circular-timer svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+        
+        .timer-bg {
+            fill: none;
+            stroke: var(--border-light);
+            stroke-width: 8;
+        }
+        
+        .timer-progress {
+            fill: none;
+            stroke: var(--rest-primary);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+        
+        .timer-progress.expired {
+            stroke: var(--error);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { stroke-opacity: 1; }
+            50% { stroke-opacity: 0.5; }
+            100% { stroke-opacity: 1; }
+        }
+        
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--rest-primary);
+            text-align: center;
+        }
+        
+        .timer-text.expired {
+            color: var(--error);
+            animation: pulse-text 1s infinite;
+        }
+        
+        @keyframes pulse-text {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        .rest-instructions {
+            background: var(--rest-light);
+            border: 1px solid var(--rest-primary);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .rest-instructions h3 {
+            color: var(--rest-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .rest-status {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            background: var(--rest-light);
+            color: var(--rest-primary);
+        }
+        
+        .rest-status.expired {
+            background: var(--error-light);
+            color: var(--error);
         }
         
         .history-modal {
@@ -578,6 +698,15 @@
             .btn {
                 padding: 8px 14px;
                 font-size: 0.8rem;
+            }
+            
+            .circular-timer {
+                width: 160px;
+                height: 160px;
+            }
+            
+            .timer-text {
+                font-size: 2rem;
             }
         }
         
@@ -737,6 +866,124 @@
         let availableWorkouts = [];
         let selectedWorkout = null;
         let workoutStructure = null;
+        let restTimers = new Map(); // Store active rest timers
+
+        // ===============================
+        // REST TIMER FUNCTIONS
+        // ===============================
+        function createRestTimer(duration, cardId) {
+            let timeLeft = duration;
+            let startTime = Date.now();
+            let animationFrame;
+            
+            const timer = {
+                timeLeft,
+                duration,
+                expired: false,
+                start() {
+                    const update = () => {
+                        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                        timeLeft = Math.max(0, duration - elapsed);
+                        
+                        this.updateDisplay(timeLeft);
+                        
+                        if (timeLeft <= 0 && !this.expired) {
+                            this.expired = true;
+                            this.onExpire();
+                        }
+                        
+                        if (timeLeft > 0) {
+                            animationFrame = requestAnimationFrame(update);
+                        }
+                    };
+                    
+                    update();
+                },
+                stop() {
+                    if (animationFrame) {
+                        cancelAnimationFrame(animationFrame);
+                    }
+                },
+                updateDisplay(seconds) {
+                    const timerElement = document.getElementById(`timer-text-${cardId}`);
+                    const progressElement = document.getElementById(`timer-progress-${cardId}`);
+                    const statusElement = document.getElementById(`rest-status-${cardId}`);
+                    
+                    if (timerElement) {
+                        timerElement.textContent = seconds;
+                        
+                        if (seconds <= 0) {
+                            timerElement.classList.add('expired');
+                        }
+                    }
+                    
+                    if (progressElement) {
+                        const circumference = 2 * Math.PI * 90; // radius = 90
+                        const progress = (duration - seconds) / duration;
+                        const offset = circumference * (1 - progress);
+                        
+                        progressElement.style.strokeDashoffset = offset;
+                        
+                        if (seconds <= 0) {
+                            progressElement.classList.add('expired');
+                        }
+                    }
+                    
+                    if (statusElement) {
+                        if (seconds <= 0) {
+                            statusElement.textContent = '🔴 Rest time complete! Swipe to continue →';
+                            statusElement.classList.add('expired');
+                        } else {
+                            statusElement.textContent = `💤 Rest time: ${seconds} seconds remaining`;
+                            statusElement.classList.remove('expired');
+                        }
+                    }
+                },
+                onExpire() {
+                    // Play chime sound
+                    this.playChime();
+                }
+            };
+            
+            // Add playChime method
+            timer.playChime = function() {
+                // Create audio context for chime sound
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Create a simple chime using oscillators
+                    const oscillator1 = audioContext.createOscillator();
+                    const oscillator2 = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator1.connect(gainNode);
+                    oscillator2.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Set frequencies for a pleasant chime (C and E notes)
+                    oscillator1.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                    oscillator2.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
+                    
+                    // Set gain envelope for a bell-like sound
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5);
+                    
+                    oscillator1.start(audioContext.currentTime);
+                    oscillator2.start(audioContext.currentTime);
+                    oscillator1.stop(audioContext.currentTime + 1.5);
+                    oscillator2.stop(audioContext.currentTime + 1.5);
+                } catch (error) {
+                    console.log('Audio not supported, using fallback');
+                    // Fallback: try to trigger device vibration if available
+                    if (navigator.vibrate) {
+                        navigator.vibrate([200, 100, 200]);
+                    }
+                }
+            };
+            
+            return timer;
+        }
 
         // ===============================
         // WORKOUT PLAN LOADING
@@ -772,13 +1019,15 @@
             const structure = {
                 plan: workoutPlan,
                 totalExercises: 0,
-                exercises: []
+                exercises: [],
+                cards: [] // Track all cards including rest cards
             };
 
             workoutPlan.blocks.forEach((block, blockIndex) => {
                 for (let round = 1; round <= block.rounds; round++) {
                     block.exercises.forEach((exercise, exerciseIndex) => {
-                        structure.exercises.push({
+                        const exerciseCard = {
+                            type: 'exercise',
                             ...exercise,
                             block_index: blockIndex,
                             block_type: block.block_type,
@@ -786,9 +1035,35 @@
                             round: round,
                             total_rounds: block.rounds,
                             exercise_index_in_block: exerciseIndex,
-                            global_index: structure.totalExercises
-                        });
+                            global_index: structure.totalExercises,
+                            rest_after: block.rest_between_rounds
+                        };
+                        
+                        structure.exercises.push(exerciseCard);
+                        structure.cards.push(exerciseCard);
                         structure.totalExercises++;
+                        
+                        // Add rest card after this exercise if:
+                        // 1. It's the last exercise in this round
+                        // 2. It's not the last round
+                        // 3. There's rest time specified
+                        const isLastExerciseInRound = exerciseIndex === block.exercises.length - 1;
+                        const isNotLastRound = round < block.rounds;
+                        const hasRestTime = block.rest_between_rounds > 0;
+                        
+                        if (isLastExerciseInRound && isNotLastRound && hasRestTime) {
+                            const restCard = {
+                                type: 'rest',
+                                duration: block.rest_between_rounds,
+                                block_type: block.block_type,
+                                block_order: block.block_order,
+                                round: round,
+                                total_rounds: block.rounds,
+                                card_id: `rest_${blockIndex}_${round}`
+                            };
+                            
+                            structure.cards.push(restCard);
+                        }
                     });
                 }
             });
@@ -812,15 +1087,19 @@
                 return;
             }
 
-            // Calculate total cards: Selection + (exercises × rounds) + Completion
-            totalCards = 1 + workoutStructure.totalExercises + 1;
+            // Calculate total cards: Selection + all cards (exercises + rest) + Completion
+            totalCards = 1 + workoutStructure.cards.length + 1;
 
             // Generate Selection Card (shows selected workout)
             container.appendChild(createSelectedWorkoutCard());
 
-            // Generate Exercise Cards
-            workoutStructure.exercises.forEach(exercise => {
-                container.appendChild(createExerciseCard(exercise));
+            // Generate Cards (exercises and rest cards)
+            workoutStructure.cards.forEach(card => {
+                if (card.type === 'exercise') {
+                    container.appendChild(createExerciseCard(card));
+                } else if (card.type === 'rest') {
+                    container.appendChild(createRestCard(card));
+                }
             });
 
             // Generate Completion Card
@@ -898,6 +1177,7 @@
                             <div style="margin: 0.4rem 0; padding: 0.4rem; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: var(--radius-md);">
                                 <div style="color: var(--accent-primary); font-weight: 600; font-size: 0.85rem;">
                                     Block ${i + 1}: ${block.block_type.toUpperCase()} (${block.rounds} rounds)
+                                    ${block.rest_between_rounds > 0 ? ` • ${block.rest_between_rounds}s rest` : ''}
                                 </div>
                                 ${block.exercises.map(ex => 
                                     `<div style="margin-left: 0.8rem; font-size: 0.8rem; color: var(--text-secondary);">
@@ -973,6 +1253,58 @@
             return card;
         }
 
+        function createRestCard(restData) {
+            const card = document.createElement('div');
+            card.className = 'card rest-card';
+            
+            const circumference = 2 * Math.PI * 90; // radius = 90
+            
+            card.innerHTML = `
+                <h1>⏸️ Rest Break</h1>
+                
+                <div class="rest-instructions">
+                    <h3>Round ${restData.round} Complete!</h3>
+                    <p>Take a ${restData.duration} second break before Round ${restData.round + 1}</p>
+                </div>
+                
+                <div class="rest-timer-container">
+                    <div class="circular-timer">
+                        <svg>
+                            <circle 
+                                cx="100" 
+                                cy="100" 
+                                r="90" 
+                                class="timer-bg"
+                            />
+                            <circle 
+                                cx="100" 
+                                cy="100" 
+                                r="90" 
+                                class="timer-progress"
+                                id="timer-progress-${restData.card_id}"
+                                stroke-dasharray="${circumference}"
+                                stroke-dashoffset="${circumference}"
+                            />
+                        </svg>
+                        <div class="timer-text" id="timer-text-${restData.card_id}">
+                            ${restData.duration}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="rest-status" id="rest-status-${restData.card_id}">
+                    💤 Rest time: ${restData.duration} seconds remaining
+                </div>
+                
+                <p style="color: var(--text-tertiary); margin-top: 1rem; font-size: 0.9rem; line-height: 1.5;">
+                    Timer will turn red and chime when complete.<br>
+                    Swipe right when ready to continue.
+                </p>
+            `;
+            
+            return card;
+        }
+
         function createCompletionCard() {
             const card = document.createElement('div');
             card.className = 'card';
@@ -998,10 +1330,23 @@
             const container = document.getElementById('progressDots');
             container.innerHTML = '';
             
+            // Create dots for all cards (including rest cards)
             for (let i = 0; i < totalCards; i++) {
                 const dot = document.createElement('div');
                 dot.className = 'dot';
                 dot.id = `dot_${i}`;
+                
+                // Mark rest card dots
+                if (i > 0 && i < totalCards - 1) {
+                    const cardIndex = i - 1; // Subtract for selection card
+                    if (cardIndex < workoutStructure.cards.length) {
+                        const cardData = workoutStructure.cards[cardIndex];
+                        if (cardData.type === 'rest') {
+                            dot.classList.add('rest');
+                        }
+                    }
+                }
+                
                 container.appendChild(dot);
             }
             
@@ -1013,6 +1358,18 @@
                 const dot = document.createElement('div');
                 dot.className = 'dot';
                 dot.id = `mobile_dot_${i}`;
+                
+                // Mark rest card dots
+                if (i > 0 && i < totalCards - 1) {
+                    const cardIndex = i - 1; // Subtract for selection card
+                    if (cardIndex < workoutStructure.cards.length) {
+                        const cardData = workoutStructure.cards[cardIndex];
+                        if (cardData.type === 'rest') {
+                            dot.classList.add('rest');
+                        }
+                    }
+                }
+                
                 mobileContainer.appendChild(dot);
             }
         }
@@ -1038,6 +1395,9 @@
                 }
             });
 
+            // Handle rest card timers
+            handleRestCardDisplay(index);
+
             // Update persistent header for exercise cards
             updatePersistentHeader(index);
 
@@ -1054,6 +1414,25 @@
             }, 300);
         }
 
+        function handleRestCardDisplay(cardIndex) {
+            // Stop all existing timers
+            restTimers.forEach(timer => timer.stop());
+            restTimers.clear();
+            
+            // If showing a rest card, start its timer
+            if (cardIndex > 0 && cardIndex < totalCards - 1) {
+                const structureIndex = cardIndex - 1; // Subtract for selection card
+                if (structureIndex < workoutStructure.cards.length) {
+                    const cardData = workoutStructure.cards[structureIndex];
+                    if (cardData.type === 'rest') {
+                        const timer = createRestTimer(cardData.duration, cardData.card_id);
+                        restTimers.set(cardData.card_id, timer);
+                        timer.start();
+                    }
+                }
+            }
+        }
+
         function updatePersistentHeader(cardIndex) {
             const header = document.getElementById('workoutHeader');
             const blockIndicator = document.getElementById('persistentBlockIndicator');
@@ -1065,16 +1444,21 @@
                 return;
             }
 
-            // Show header for exercise cards
-            header.style.display = 'flex';
-
-            // Get current exercise info
-            const exerciseIndex = cardIndex - 1; // Subtract 1 for selection card
-            if (exerciseIndex >= 0 && exerciseIndex < workoutStructure.exercises.length) {
-                const exercise = workoutStructure.exercises[exerciseIndex];
+            // Get current card info
+            const structureIndex = cardIndex - 1; // Subtract 1 for selection card
+            if (structureIndex >= 0 && structureIndex < workoutStructure.cards.length) {
+                const cardData = workoutStructure.cards[structureIndex];
                 
-                blockIndicator.textContent = `${exercise.block_type} Block ${exercise.block_order}`;
-                roundIndicator.textContent = `Round ${exercise.round} of ${exercise.total_rounds}`;
+                // Show header for both exercise and rest cards
+                header.style.display = 'flex';
+                
+                if (cardData.type === 'rest') {
+                    blockIndicator.textContent = `${cardData.block_type} Block ${cardData.block_order} - REST`;
+                    roundIndicator.textContent = `Between Rounds ${cardData.round} & ${cardData.round + 1}`;
+                } else {
+                    blockIndicator.textContent = `${cardData.block_type} Block ${cardData.block_order}`;
+                    roundIndicator.textContent = `Round ${cardData.round} of ${cardData.total_rounds}`;
+                }
             }
         }
 
@@ -1169,9 +1553,15 @@
                 await handleWorkoutStart();
             }
             
-            // Save exercise data before moving
+            // Save exercise data before moving (only for exercise cards)
             if (currentCard > 0 && currentCard < totalCards - 1 && workoutStarted) {
-                await saveCurrentExercise();
+                const structureIndex = currentCard - 1;
+                if (structureIndex < workoutStructure.cards.length) {
+                    const cardData = workoutStructure.cards[structureIndex];
+                    if (cardData.type === 'exercise') {
+                        await saveCurrentExercise();
+                    }
+                }
             }
             
             // Special handling for completion card
@@ -1225,10 +1615,13 @@
         async function saveCurrentExercise() {
             if (!workoutId || !workoutStructure) return;
             
-            const exerciseIndex = currentCard - 1; // Subtract 1 for selection card
-            if (exerciseIndex < 0 || exerciseIndex >= workoutStructure.exercises.length) return;
+            const structureIndex = currentCard - 1; // Subtract 1 for selection card
+            if (structureIndex < 0 || structureIndex >= workoutStructure.cards.length) return;
             
-            const exercise = workoutStructure.exercises[exerciseIndex];
+            const cardData = workoutStructure.cards[structureIndex];
+            if (cardData.type !== 'exercise') return;
+            
+            const exercise = cardData;
             const exerciseKey = `${exercise.exercise_id}_${exercise.block_index}_${exercise.round}`;
             
             // Get form data
@@ -1349,6 +1742,10 @@
             selectedWorkout = null;
             workoutStructure = null;
             
+            // Stop all rest timers
+            restTimers.forEach(timer => timer.stop());
+            restTimers.clear();
+            
             generateCards();
         }
 
@@ -1386,7 +1783,7 @@
         // INITIALIZATION
         // ===============================
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🏋️ Workout Tracker - Card Design');
+            console.log('🏋️ Workout Tracker - Card Design with Rest Cards');
             console.log('API URL:', API_CONFIG.BASE_URL);
             
             try {
