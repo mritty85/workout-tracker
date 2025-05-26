@@ -359,19 +359,38 @@
         
         .mobile-progress-dots {
             position: fixed;
-            bottom: 1.5rem;
+            bottom: 2rem;
             left: 50%;
             transform: translateX(-50%);
-            display: none; /* Hidden by default, shown on mobile */
+            display: flex; /* Always flex, controlled by media query */
             gap: 6px;
             align-items: center;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 0.4rem 0.8rem;
+            padding: 0.5rem 1rem;
             border-radius: 20px;
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-lg);
             border: 1px solid var(--border-light);
             z-index: 100;
+        }
+        
+        .mobile-progress-dots .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-medium);
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-progress-dots .dot.active { 
+            background: var(--accent-primary);
+            transform: scale(1.3);
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+        
+        .mobile-progress-dots .dot.completed { 
+            background: var(--success);
+            transform: scale(1.1);
         }
         
         .dot {
@@ -502,14 +521,16 @@
             z-index: 10;
         }
         
-        /* Responsive improvements */
-        @media (max-width: 480px) {
+        /* Mobile-first approach - show mobile dots by default */
+        @media (max-width: 768px) {
             .navigation {
-                display: none; /* Hide entire navigation on mobile */
+                display: none !important; /* Force hide navigation on mobile */
             }
             
             .mobile-progress-dots {
-                display: flex; /* Show mobile progress dots */
+                display: flex !important; /* Force show mobile dots */
+                bottom: 1.5rem;
+                padding: 0.4rem 0.8rem;
             }
             
             .mobile-progress-dots .dot {
@@ -522,7 +543,7 @@
             }
             
             .cards-container {
-                padding: 0.75rem 0.5rem 0.25rem;
+                padding: 0.75rem 0.5rem 2rem; /* Add bottom padding for floating dots */
             }
             
             .card {
@@ -560,10 +581,14 @@
             }
         }
         
-        /* Desktop navigation */
-        @media (min-width: 481px) {
+        /* Desktop - hide mobile dots, show navigation */
+        @media (min-width: 769px) {
             .mobile-progress-dots {
-                display: none; /* Hide mobile dots on desktop */
+                display: none !important; /* Force hide mobile dots on desktop */
+            }
+            
+            .navigation {
+                display: flex !important; /* Force show navigation on desktop */
             }
         }
     </style>
