@@ -352,16 +352,22 @@
         }
         
         .progress-dots {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .mobile-progress-dots {
             position: fixed;
             bottom: 1.5rem;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            gap: 8px;
+            display: none; /* Hidden by default, shown on mobile */
+            gap: 6px;
             align-items: center;
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.8rem;
             border-radius: 20px;
             box-shadow: var(--shadow-md);
             border: 1px solid var(--border-light);
@@ -502,13 +508,11 @@
                 display: none; /* Hide entire navigation on mobile */
             }
             
-            .progress-dots {
-                bottom: 1rem;
-                padding: 0.4rem 0.8rem;
-                gap: 6px;
+            .mobile-progress-dots {
+                display: flex; /* Show mobile progress dots */
             }
             
-            .dot {
+            .mobile-progress-dots .dot {
                 width: 6px;
                 height: 6px;
             }
@@ -558,20 +562,8 @@
         
         /* Desktop navigation */
         @media (min-width: 481px) {
-            .progress-dots {
-                position: static;
-                transform: none;
-                background: transparent;
-                backdrop-filter: none;
-                padding: 0;
-                border-radius: 0;
-                box-shadow: none;
-                border: none;
-            }
-            
-            .dot {
-                width: 8px;
-                height: 8px;
+            .mobile-progress-dots {
+                display: none; /* Hide mobile dots on desktop */
             }
         }
     </style>
@@ -592,6 +584,9 @@
             <div class="progress-dots" id="progressDots"></div>
             <button class="nav-button" id="nextBtn" onclick="nextCard()">›</button>
         </div>
+        
+        <!-- Mobile-only floating progress dots -->
+        <div class="mobile-progress-dots" id="mobileProgressDots"></div>
     </div>
     
     <!-- History Modal -->
@@ -974,6 +969,7 @@
         }
 
         function generateProgressDots() {
+            // Generate dots for desktop navigation
             const container = document.getElementById('progressDots');
             container.innerHTML = '';
             
@@ -982,6 +978,17 @@
                 dot.className = 'dot';
                 dot.id = `dot_${i}`;
                 container.appendChild(dot);
+            }
+            
+            // Generate dots for mobile floating display
+            const mobileContainer = document.getElementById('mobileProgressDots');
+            mobileContainer.innerHTML = '';
+            
+            for (let i = 0; i < totalCards; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.id = `mobile_dot_${i}`;
+                mobileContainer.appendChild(dot);
             }
         }
 
@@ -1047,8 +1054,20 @@
         }
 
         function updateProgressDots(currentIndex) {
-            const dots = document.querySelectorAll('.dot');
+            // Update desktop dots
+            const dots = document.querySelectorAll('#progressDots .dot');
             dots.forEach((dot, i) => {
+                dot.classList.remove('active', 'completed');
+                if (i === currentIndex) {
+                    dot.classList.add('active');
+                } else if (i < currentIndex) {
+                    dot.classList.add('completed');
+                }
+            });
+            
+            // Update mobile dots
+            const mobileDots = document.querySelectorAll('#mobileProgressDots .dot');
+            mobileDots.forEach((dot, i) => {
                 dot.classList.remove('active', 'completed');
                 if (i === currentIndex) {
                     dot.classList.add('active');
