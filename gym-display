@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Tracker - Gym Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&family=Chivo:wght@300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Chivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+            color: #1e293b;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* TV-optimized layout - 16:9 aspect ratio */
+        .container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            padding: 2vw;
+            gap: 2vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5vh 3vw;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 2vh;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            font-family: 'Arvo', serif;
+            font-size: 3vw;
+            font-weight: 700;
+            background: linear-gradient(45deg, #3b82f6, #06d6a0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 2vw;
+            font-size: 2vw;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .status-dot {
+            width: 1.5vw;
+            height: 1.5vw;
+            border-radius: 50%;
+            background: #06d6a0;
+            box-shadow: 0 0 20px rgba(6, 214, 160, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.active {
+            background: #06d6a0;
+            box-shadow: 0 0 20px rgba(6, 214, 160, 0.4);
+        }
+
+        .status-dot.standby {
+            background: #64748b;
+            box-shadow: 0 0 20px rgba(100, 116, 139, 0.3);
+            animation: none;
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            animation: pulse 1s infinite;
+        }
+
+        /* Main content area */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3vw;
+            height: 100%;
+        }
+
+        /* Current workout panel */
+        .current-workout {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border-radius: 3vh;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            padding: 3vh 2vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-family: 'Arvo', serif;
+            font-size: 2.5vw;
+            font-weight: 700;
+            margin-bottom: 3vh;
+            text-align: center;
+            color: #334155;
+        }
+
+        .workout-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .current-exercise {
+            font-family: 'Arvo', serif;
+            font-size: 4vw;
+            font-weight: 700;
+            margin-bottom: 2vh;
+            color: #3b82f6;
+            text-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .exercise-details {
+            font-size: 2vw;
+            color: #64748b;
+            margin-bottom: 3vh;
+            font-weight: 400;
+        }
+
+        .timer {
+            font-family: 'Arvo', serif;
+            font-size: 6vw;
+            font-weight: 700;
+            color: #06d6a0;
+            text-shadow: 0 2px 4px rgba(6, 214, 160, 0.1);
+        }
+
+        /* Progress panel */
+        .progress-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border-radius: 3vh;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            padding: 3vh 2vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .progress-grid {
+            display: grid;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 2vh;
+            flex: 1;
+        }
+
+        .round {
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 1.5vh;
+            padding: 2vh;
+            border: 1px solid rgba(203, 213, 225, 0.5);
+        }
+
+        .round.completed {
+            background: rgba(6, 214, 160, 0.1);
+            border-color: rgba(6, 214, 160, 0.4);
+        }
+
+        .round.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .round-header {
+            font-family: 'Arvo', serif;
+            font-size: 1.8vw;
+            font-weight: 700;
+            margin-bottom: 1vh;
+            color: #334155;
+        }
+
+        .exercises {
+            display: flex;
+            gap: 1vw;
+        }
+
+        .exercise-chip {
+            flex: 1;
+            background: rgba(248, 250, 252, 0.9);
+            border-radius: 1vh;
+            padding: 1vh;
+            text-align: center;
+            font-size: 1.2vw;
+            border: 1px solid rgba(203, 213, 225, 0.6);
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .exercise-chip.completed {
+            background: rgba(6, 214, 160, 0.15);
+            border-color: rgba(6, 214, 160, 0.5);
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .exercise-chip.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        /* Footer stats */
+        .footer {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 2vh 3vw;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 2vh;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Arvo', serif;
+            font-size: 3vw;
+            font-weight: 700;
+            color: #3b82f6;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 1.5vw;
+            color: #64748b;
+            margin-top: 0.5vh;
+            font-weight: 500;
+        }
+
+        /* Responsive adjustments for different screen ratios */
+        @media (max-aspect-ratio: 16/10) {
+            .container { padding: 1.5vw; }
+            .logo { font-size: 2.5vw; }
+            .status { font-size: 1.8vw; }
+            .panel-title { font-size: 2.2vw; }
+            .current-exercise { font-size: 3.5vw; }
+            .timer { font-size: 5vw; }
+        }
+
+        @media (min-aspect-ratio: 21/9) {
+            .main-content { grid-template-columns: 1.2fr 0.8fr; }
+            .current-exercise { font-size: 3.5vw; }
+            .timer { font-size: 5.5vw; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">💪 WORKOUT TRACKER</div>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span id="status-text">Active Workout</span>
+                <span id="current-time"></span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Current Exercise Panel -->
+            <div class="current-workout">
+                <div class="panel-title">Current Exercise</div>
+                <div class="workout-info">
+                    <div class="current-exercise" id="current-exercise">Push-ups</div>
+                    <div class="exercise-details" id="exercise-details">
+                        Round 2 of 3 • Target: 12 reps • Previous: 10 reps
+                    </div>
+                    <div class="timer" id="workout-timer">18:42</div>
+                </div>
+            </div>
+
+            <!-- Progress Panel -->
+            <div class="progress-panel">
+                <div class="panel-title">Workout Progress</div>
+                <div class="progress-grid">
+                    <div class="round completed">
+                        <div class="round-header">Round 1 ✓</div>
+                        <div class="exercises">
+                            <div class="exercise-chip completed">Push-ups<br>12</div>
+                            <div class="exercise-chip completed">Rows<br>10</div>
+                            <div class="exercise-chip completed">Plank<br>45s</div>
+                        </div>
+                    </div>
+                    <div class="round active">
+                        <div class="round-header">Round 2 →</div>
+                        <div class="exercises">
+                            <div class="exercise-chip active">Push-ups<br>?</div>
+                            <div class="exercise-chip">Rows</div>
+                            <div class="exercise-chip">Plank</div>
+                        </div>
+                    </div>
+                    <div class="round">
+                        <div class="round-header">Round 3</div>
+                        <div class="exercises">
+                            <div class="exercise-chip">Push-ups</div>
+                            <div class="exercise-chip">Rows</div>
+                            <div class="exercise-chip">Plank</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Stats -->
+        <div class="footer">
+            <div class="stat">
+                <span class="stat-value" id="total-exercises">5</span>
+                <div class="stat-label">Exercises Done</div>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="total-reps">47</span>
+                <div class="stat-label">Total Reps</div>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="workout-duration">18:42</span>
+                <div class="stat-label">Duration</div>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="progress-percent">56%</span>
+                <div class="stat-label">Complete</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gym Display Integration with Live API
+        class GymDisplay {
+            constructor() {
+                this.apiUrl = 'https://script.google.com/macros/s/AKfycbxk9Xw-iIDk_sLXMqioGZFzqO5LrKqBZImc2fTe5ToU6NTtjhsHtjZFUNwnFZ2yeAM/exec';
+                this.userId = 'katie';
+                this.currentWorkout = null;
+                this.pollInterval = null;
+                this.isActive = false;
+                this.startTime = null;
+                this.timerInterval = null;
+            }
+
+            async start() {
+                console.log('🚀 Gym Display starting...');
+                this.updateClock();
+                this.checkForActiveWorkout();
+                
+                // Start with standby polling (every 10 seconds)
+                this.pollInterval = setInterval(() => this.checkForActiveWorkout(), 10000);
+                
+                // Update clock every second
+                setInterval(() => this.updateClock(), 1000);
+            }
+
+            async checkForActiveWorkout() {
+                try {
+                    const response = await fetch(`${this.apiUrl}?action=get_active_workout&userId=${this.userId}`);
+                    const data = await response.json();
+                    
+                    console.log('📡 API Response:', data);
+
+                    if (data.success && data.workoutId) {
+                        // Active workout found
+                        if (!this.isActive) {
+                            this.switchToActiveMode(data);
+                        } else {
+                            this.updateActiveWorkout(data);
+                        }
+                    } else {
+                        // No active workout
+                        if (this.isActive) {
+                            this.switchToStandbyMode();
+                        } else {
+                            this.showStandbyDisplay();
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ API Error:', error);
+                    this.showOfflineMode();
+                }
+            }
+
+            switchToActiveMode(workoutData) {
+                console.log('🏋️ Switching to ACTIVE mode');
+                this.currentWorkout = workoutData;
+                this.isActive = true;
+                this.startTime = workoutData.startTime ? new Date(workoutData.startTime) : new Date();
+                
+                // Switch to faster polling during workout (every 3 seconds)
+                clearInterval(this.pollInterval);
+                this.pollInterval = setInterval(() => this.checkForActiveWorkout(), 3000);
+                
+                // Start workout timer
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => this.updateWorkoutTimer(), 1000);
+                
+                this.showActiveWorkoutDisplay(workoutData);
+                this.updateStatusIndicator('active', 'Active Workout');
+            }
+
+            switchToStandbyMode() {
+                console.log('😴 Switching to STANDBY mode');
+                this.currentWorkout = null;
+                this.isActive = false;
+                this.startTime = null;
+                
+                // Switch back to slower polling (every 10 seconds)
+                clearInterval(this.pollInterval);
+                this.pollInterval = setInterval(() => this.checkForActiveWorkout(), 10000);
+                
+                // Stop workout timer
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                
+                this.showStandbyDisplay();
+                this.updateStatusIndicator('standby', 'Standby');
+            }
+
+            updateActiveWorkout(data) {
+                // Update current exercise
+                const currentExercise = data.currentExercise || 'In Progress';
+                document.getElementById('current-exercise').textContent = currentExercise;
+                
+                // Update exercise details
+                const round = data.currentRound || 1;
+                const totalRounds = data.totalRounds || 3;
+                const target = data.exerciseTarget || 'Complete';
+                const previous = data.previousPerformance || 'N/A';
+                
+                document.getElementById('exercise-details').textContent = 
+                    `Round ${round} of ${totalRounds} • Target: ${target} • Previous: ${previous}`;
+                
+                // Update progress display
+                this.updateProgressDisplay(data);
+                
+                // Update footer stats
+                this.updateFooterStats(data);
+            }
+
+            updateProgressDisplay(data) {
+                const rounds = document.querySelectorAll('.round');
+                const currentRound = data.currentRound || 1;
+                const completedExercises = data.completedExercises || [];
+                
+                rounds.forEach((round, index) => {
+                    const roundNum = index + 1;
+                    const exercises = round.querySelectorAll('.exercise-chip');
+                    
+                    // Update round status
+                    round.classList.remove('active', 'completed');
+                    if (roundNum < currentRound) {
+                        round.classList.add('completed');
+                    } else if (roundNum === currentRound) {
+                        round.classList.add('active');
+                    }
+                    
+                    // Update exercise chips
+                    exercises.forEach((chip, exerciseIndex) => {
+                        chip.classList.remove('active', 'completed');
+                        
+                        const completed = completedExercises.find(ex => 
+                            ex.round === roundNum && ex.exerciseIndex === exerciseIndex
+                        );
+                        
+                        if (completed) {
+                            chip.classList.add('completed');
+                            chip.innerHTML = `${completed.exerciseName}<br>${completed.reps || completed.duration || 'Done'}`;
+                        } else if (roundNum === currentRound && exerciseIndex === (data.currentExerciseIndex || 0)) {
+                            chip.classList.add('active');
+                            chip.innerHTML = `${data.currentExercise || 'Exercise'}<br>?`;
+                        }
+                    });
+                });
+            }
+
+            updateFooterStats(data) {
+                document.getElementById('total-exercises').textContent = data.exercisesCompleted || '0';
+                document.getElementById('total-reps').textContent = data.totalReps || '0';
+                
+                const progress = data.progressPercent || 0;
+                document.getElementById('progress-percent').textContent = `${Math.round(progress)}%`;
+            }
+
+            updateWorkoutTimer() {
+                if (!this.startTime) return;
+                
+                const now = new Date();
+                const elapsed = Math.floor((now - this.startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                document.getElementById('workout-timer').textContent = timeString;
+                document.getElementById('workout-duration').textContent = timeString;
+            }
+
+            showStandbyDisplay() {
+                document.getElementById('current-exercise').textContent = 'Ready for Workout';
+                document.getElementById('exercise-details').textContent = 'Waiting for Katie to begin her workout session';
+                document.getElementById('workout-timer').textContent = '--:--';
+                
+                // Reset progress display
+                const rounds = document.querySelectorAll('.round');
+                rounds.forEach(round => {
+                    round.classList.remove('active', 'completed');
+                    const exercises = round.querySelectorAll('.exercise-chip');
+                    exercises.forEach((chip, index) => {
+                        chip.classList.remove('active', 'completed');
+                        const exerciseNames = ['Push-ups', 'Rows', 'Plank'];
+                        chip.innerHTML = exerciseNames[index] || 'Exercise';
+                    });
+                });
+                
+                // Reset footer stats
+                document.getElementById('total-exercises').textContent = '0';
+                document.getElementById('total-reps').textContent = '0';
+                document.getElementById('workout-duration').textContent = '--:--';
+                document.getElementById('progress-percent').textContent = '0%';
+            }
+
+            showOfflineMode() {
+                document.getElementById('current-exercise').textContent = 'Connection Lost';
+                document.getElementById('exercise-details').textContent = 'Attempting to reconnect to workout tracker...';
+                this.updateStatusIndicator('offline', 'Offline');
+            }
+
+            updateStatusIndicator(status, text) {
+                const statusDot = document.querySelector('.status-dot');
+                const statusText = document.getElementById('status-text');
+                
+                statusDot.className = 'status-dot';
+                statusDot.classList.add(status);
+                statusText.textContent = text;
+            }
+
+            updateClock() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('current-time').textContent = timeString;
+            }
+        }
+
+        // Initialize Gym Display
+        const gymDisplay = new GymDisplay();
+        
+        // Start when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            gymDisplay.start();
+        });
+
+        // Handle page visibility changes (pause/resume when tab not visible)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('📱 Page hidden - reducing poll frequency');
+                clearInterval(gymDisplay.pollInterval);
+                gymDisplay.pollInterval = setInterval(() => gymDisplay.checkForActiveWorkout(), 30000);
+            } else {
+                console.log('👀 Page visible - resuming normal polling');
+                clearInterval(gymDisplay.pollInterval);
+                const frequency = gymDisplay.isActive ? 3000 : 10000;
+                gymDisplay.pollInterval = setInterval(() => gymDisplay.checkForActiveWorkout(), frequency);
+                gymDisplay.checkForActiveWorkout(); // Immediate check when returning
+            }
+        });
+    </script>
+</body>
+</html>
