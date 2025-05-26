@@ -334,13 +334,15 @@
         }
 
         async function startWorkout() {
+            // Use GET request instead of POST to avoid 405 error
             return await apiCall('start_workout', {
                 user_id: API_CONFIG.USER_ID,
                 workout_type: API_CONFIG.WORKOUT_TYPE
-            });
+            }, 'GET');
         }
 
         async function logExercise(workoutId, exerciseData) {
+            // Use GET request instead of POST to avoid 405 error
             return await apiCall('log_exercise', {
                 workout_id: workoutId,
                 exercise_id: exerciseData.exercise_id,
@@ -349,13 +351,14 @@
                 weight: exerciseData.weight || 0,
                 reps: exerciseData.reps || 0,
                 time_seconds: exerciseData.time_seconds || 0
-            });
+            }, 'GET');
         }
 
         async function completeWorkout(workoutId) {
+            // Use GET request instead of POST to avoid 405 error
             return await apiCall('complete_workout', {
                 workout_id: workoutId
-            });
+            }, 'GET');
         }
 
         async function getExerciseHistory(exerciseName) {
