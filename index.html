@@ -934,7 +934,7 @@
                             statusElement.textContent = '🔴 Rest time complete! Swipe to continue →';
                             statusElement.classList.add('expired');
                         } else {
-                            statusElement.textContent = `💤 Rest time: ${seconds} seconds remaining`;
+                            statusElement.textContent = `Rest time: ${seconds} seconds remaining`;
                             statusElement.classList.remove('expired');
                         }
                     }
@@ -1260,8 +1260,6 @@
             const circumference = 2 * Math.PI * 90; // radius = 90
             
             card.innerHTML = `
-                <h1>⏸️ Rest Break</h1>
-                
                 <div class="rest-instructions">
                     <h3>Round ${restData.round} Complete!</h3>
                     <p>Take a ${restData.duration} second break before Round ${restData.round + 1}</p>
@@ -1269,7 +1267,7 @@
                 
                 <div class="rest-timer-container">
                     <div class="circular-timer">
-                        <svg>
+                        <svg viewBox="0 0 200 200">
                             <circle 
                                 cx="100" 
                                 cy="100" 
@@ -1293,11 +1291,10 @@
                 </div>
                 
                 <div class="rest-status" id="rest-status-${restData.card_id}">
-                    💤 Rest time: ${restData.duration} seconds remaining
+                    Rest time: ${restData.duration} seconds remaining
                 </div>
                 
                 <p style="color: var(--text-tertiary); margin-top: 1rem; font-size: 0.9rem; line-height: 1.5;">
-                    Timer will turn red and chime when complete.<br>
                     Swipe right when ready to continue.
                 </p>
             `;
