@@ -507,10 +507,10 @@
             animation: pulse-text 1s infinite;
         }
         
-        @keyframes pulse-text {
-            0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.1); }
-            100% { transform: translate(-50%, -50%) scale(1); }
+        @keyframes flash-border {
+            0% { border-color: var(--rest-primary); }
+            50% { border-color: var(--error); box-shadow: 0 0 20px var(--error); }
+            100% { border-color: var(--rest-primary); }
         }
         
         .rest-instructions {
@@ -945,41 +945,149 @@
                 }
             };
             
-            // Add playChime method
+            // Add improved audio chime method with multiple fallbacks
             timer.playChime = function() {
-                // Create audio context for chime sound
+                console.log('🔔 Attempting to play rest timer chime...');
+                
+                // Method 1: Try Web Audio API with user gesture detection
                 try {
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     
-                    // Create a simple chime using oscillators
+                    // Check if audio context is allowed
+                    if (audioContext.state === 'suspended') {
+                        console.log('Audio context suspended, trying to resume...');
+                        audioContext.resume().then(() => {
+                            this.playWebAudioChime(audioContext);
+                        }).catch(() => {
+                            console.log('Could not resume audio context, trying fallbacks...');
+                            this.tryFallbackSounds();
+                        });
+                    } else {
+                        this.playWebAudioChime(audioContext);
+                    }
+                } catch (error) {
+                    console.log('Web Audio API failed:', error.message);
+                    this.tryFallbackSounds();
+                }
+            };
+            
+            timer.playWebAudioChime = function(audioContext) {
+                try {
+                    // Create multiple oscillators for a richer chime sound
                     const oscillator1 = audioContext.createOscillator();
                     const oscillator2 = audioContext.createOscillator();
+                    const oscillator3 = audioContext.createOscillator();
                     const gainNode = audioContext.createGain();
                     
                     oscillator1.connect(gainNode);
                     oscillator2.connect(gainNode);
+                    oscillator3.connect(gainNode);
                     gainNode.connect(audioContext.destination);
                     
-                    // Set frequencies for a pleasant chime (C and E notes)
+                    // Set frequencies for a pleasant chime (C major chord)
                     oscillator1.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
                     oscillator2.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
+                    oscillator3.frequency.setValueAtTime(783.99, audioContext.currentTime); // G5
                     
-                    // Set gain envelope for a bell-like sound
+                    // Set waveform for a more bell-like sound
+                    oscillator1.type = 'sine';
+                    oscillator2.type = 'sine';
+                    oscillator3.type = 'triangle';
+                    
+                    // Create envelope for bell-like decay
                     gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5);
+                    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.02);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2);
                     
-                    oscillator1.start(audioContext.currentTime);
-                    oscillator2.start(audioContext.currentTime);
-                    oscillator1.stop(audioContext.currentTime + 1.5);
-                    oscillator2.stop(audioContext.currentTime + 1.5);
+                    // Start and stop oscillators
+                    const startTime = audioContext.currentTime;
+                    const stopTime = startTime + 2;
+                    
+                    oscillator1.start(startTime);
+                    oscillator2.start(startTime);
+                    oscillator3.start(startTime);
+                    
+                    oscillator1.stop(stopTime);
+                    oscillator2.stop(stopTime);
+                    oscillator3.stop(stopTime);
+                    
+                    console.log('🔔 Web Audio chime played successfully');
                 } catch (error) {
-                    console.log('Audio not supported, using fallback');
-                    // Fallback: try to trigger device vibration if available
-                    if (navigator.vibrate) {
-                        navigator.vibrate([200, 100, 200]);
+                    console.log('Web Audio chime failed:', error.message);
+                    this.tryFallbackSounds();
+                }
+            };
+            
+            timer.tryFallbackSounds = function() {
+                console.log('🔔 Trying fallback sound methods...');
+                
+                // Method 2: Try HTML5 Audio with data URL
+                try {
+                    // Create a simple beep tone as data URL
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const sampleRate = audioContext.sampleRate;
+                    const duration = 0.5;
+                    const numSamples = sampleRate * duration;
+                    const buffer = audioContext.createBuffer(1, numSamples, sampleRate);
+                    const channelData = buffer.getChannelData(0);
+                    
+                    // Generate a simple sine wave
+                    for (let i = 0; i < numSamples; i++) {
+                        channelData[i] = Math.sin(2 * Math.PI * 800 * i / sampleRate) * 0.3;
+                    }
+                    
+                    const source = audioContext.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(audioContext.destination);
+                    source.start();
+                    
+                    console.log('🔔 Fallback audio buffer played');
+                } catch (error) {
+                    console.log('Fallback audio failed:', error.message);
+                    this.tryPhysicalFeedback();
+                }
+            };
+            
+            timer.tryPhysicalFeedback = function() {
+                console.log('🔔 Trying physical feedback...');
+                
+                // Method 3: Vibration API
+                if ('vibrate' in navigator) {
+                    try {
+                        // Create a pattern: short, pause, short, pause, long
+                        navigator.vibrate([200, 100, 200, 100, 500]);
+                        console.log('📳 Vibration feedback triggered');
+                        return;
+                    } catch (error) {
+                        console.log('Vibration failed:', error.message);
                     }
                 }
+                
+                // Method 4: Visual feedback as last resort
+                console.log('🔔 Using visual feedback only');
+                this.triggerVisualAlert();
+            };
+            
+            timer.triggerVisualAlert = function() {
+                // Flash the timer text briefly
+                const timerElement = document.getElementById(`timer-text-${cardId}`);
+                if (timerElement) {
+                    timerElement.style.animation = 'pulse-text 0.5s ease-in-out 3';
+                    setTimeout(() => {
+                        timerElement.style.animation = '';
+                    }, 1500);
+                }
+                
+                // Also flash the border of the card
+                const cards = document.querySelectorAll('.card.rest-card');
+                cards.forEach(card => {
+                    if (card.classList.contains('active')) {
+                        card.style.animation = 'flash-border 0.3s ease-in-out 4';
+                        setTimeout(() => {
+                            card.style.animation = '';
+                        }, 1200);
+                    }
+                });
             };
             
             return timer;
@@ -1288,10 +1396,6 @@
                             ${restData.duration}
                         </div>
                     </div>
-                </div>
-                
-                <div class="rest-status" id="rest-status-${restData.card_id}">
-                    Rest time: ${restData.duration} seconds remaining
                 </div>
                 
                 <p style="color: var(--text-tertiary); margin-top: 1rem; font-size: 0.9rem; line-height: 1.5;">
