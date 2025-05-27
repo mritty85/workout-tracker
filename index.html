@@ -1316,17 +1316,16 @@
             card.innerHTML = `
                 <h2>${exercise.exercise_name}</h2>
                 <div class="exercise-info">
-                    <div style="margin-bottom: 1rem;">
-                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.9rem;">
-                            Target: ${exercise.is_timed ? `${exercise.target_time} seconds` : `${exercise.target_reps} reps`}
+                    <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; justify-content: center;">
+                        <div style="background: var(--accent-light); border: 1px solid var(--accent-primary); border-radius: var(--radius-md); padding: 0.5rem 1rem; text-align: center; font-weight: 600; color: var(--accent-primary); min-width: 80px;">
+                            ${exercise.is_timed ? `${exercise.target_time}s` : `${exercise.target_reps} reps`}
                         </div>
-                        ${exercise.target_weight > 0 ? `<div style="font-size: 0.85rem;"><strong>Suggested Weight:</strong> ${exercise.target_weight} lbs</div>` : ''}
+                        ${exercise.target_weight > 0 ? `
+                            <div style="background: var(--success-light); border: 1px solid var(--success); border-radius: var(--radius-md); padding: 0.5rem 1rem; text-align: center; font-weight: 600; color: var(--success); min-width: 80px;">
+                                ${exercise.target_weight} lbs
+                            </div>
+                        ` : ''}
                     </div>
-                    ${exercise.instructions ? `
-                        <div style="margin-bottom: 0.75rem; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.3; font-style: italic;">
-                            <strong>Form:</strong> ${exercise.instructions}
-                        </div>
-                    ` : ''}
                     ${exercise.notes ? `
                         <div style="margin-bottom: 0.75rem; font-size: 0.8rem; color: var(--warning); background: var(--warning-light); padding: 0.5rem; border-radius: var(--radius-md); border-left: 3px solid var(--warning);">
                             <strong>Note:</strong> ${exercise.notes}
