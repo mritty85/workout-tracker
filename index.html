@@ -563,16 +563,24 @@
             padding: 1.5rem;
             transform: translateY(100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 15;
+            z-index: 5;
             overflow-y: auto;
+            opacity: 0;
+            pointer-events: none;
         }
         
         .history-card.visible {
             transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 20;
         }
         
         .history-card.preview {
             transform: translateY(80%);
+            opacity: 0.9;
+            pointer-events: auto;
+            z-index: 15;
         }
         
         .history-table {
@@ -1348,6 +1356,9 @@
             
             historyCard.classList.remove('visible', 'preview');
             historyCard.style.transform = '';
+            historyCard.style.opacity = '0';
+            historyCard.style.pointerEvents = 'none';
+            historyCard.style.zIndex = '5';
             
             if (expandedHistoryCard === exerciseKey) {
                 expandedHistoryCard = null;
@@ -1767,6 +1778,15 @@
                 hideHistoryCard(expandedHistoryCard);
             }
             
+            // Hide all history cards when navigating
+            const historyCards = document.querySelectorAll('.history-card');
+            historyCards.forEach(card => {
+                card.classList.remove('visible', 'preview');
+                card.style.opacity = '0';
+                card.style.pointerEvents = 'none';
+                card.style.zIndex = '5';
+            });
+            
             cards.forEach((card, i) => {
                 card.classList.remove('active');
                 if (i === index) {
@@ -2096,6 +2116,15 @@
             // Stop all rest timers
             restTimers.forEach(timer => timer.stop());
             restTimers.clear();
+            
+            // Hide all history cards
+            const historyCards = document.querySelectorAll('.history-card');
+            historyCards.forEach(card => {
+                card.classList.remove('visible', 'preview');
+                card.style.opacity = '0';
+                card.style.pointerEvents = 'none';
+                card.style.zIndex = '5';
+            });
             
             generateCards();
         }
