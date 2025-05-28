@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Workout Tracker - Card Design</title>
+    <title>Workout Tracker - Swipe History</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Workout Tracker">
@@ -112,12 +112,19 @@
             overflow: hidden;
         }
         
-        .card {
+        .card-stack {
             position: absolute;
             width: 100%;
             max-width: 400px;
             height: auto;
             max-height: calc(100% - 1rem);
+        }
+        
+        .card {
+            position: absolute;
+            width: 100%;
+            height: auto;
+            max-height: calc(100vh - 8rem);
             background: var(--bg-primary);
             border-radius: var(--radius-xl);
             box-shadow: var(--shadow-xl);
@@ -130,11 +137,37 @@
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
             text-align: center;
             overflow: hidden;
+            top: 0;
+            left: 0;
         }
         
         .card.rest-card {
             background: linear-gradient(135deg, var(--rest-bg) 0%, var(--rest-light) 100%);
             border: 2px solid var(--rest-primary);
+        }
+        
+        .history-card {
+            background: linear-gradient(135deg, var(--accent-light) 0%, var(--bg-primary) 100%);
+            border: 2px solid var(--accent-primary);
+            transform: translateY(10px);
+            z-index: 5;
+            opacity: 0.95;
+        }
+        
+        .exercise-card {
+            z-index: 10;
+            transform: translateY(0);
+        }
+        
+        .card-stack.history-open .exercise-card {
+            transform: translateY(-95%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-stack.history-open .history-card {
+            transform: translateY(5%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10;
         }
         
         .card h1 { 
@@ -162,6 +195,10 @@
         
         .rest-card h1 {
             color: var(--rest-primary);
+        }
+        
+        .history-card h1 {
+            color: var(--accent-primary);
         }
         
         .exercise-info {
@@ -232,14 +269,6 @@
             padding: 0.4rem 1rem;
             border-radius: var(--radius-lg);
             display: inline-block;
-        }
-        
-        .round-indicator {
-            display: none; /* Hide the old round indicator in cards */
-        }
-        
-        .block-indicator {
-            display: none; /* Hide the old block indicator in cards */
         }
         
         .input-group {
@@ -381,7 +410,7 @@
             bottom: 2rem;
             left: 50%;
             transform: translateX(-50%);
-            display: flex; /* Always flex, controlled by media query */
+            display: flex;
             gap: 6px;
             align-items: center;
             background: rgba(255, 255, 255, 0.95);
@@ -448,6 +477,55 @@
             padding: 0.5rem 1rem;
             border-radius: var(--radius-lg);
             display: inline-block;
+        }
+        
+        /* History card specific styles */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .history-table th {
+            background: var(--accent-light);
+            color: var(--accent-primary);
+            font-weight: 600;
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+        
+        .history-table td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-secondary);
+        }
+        
+        .history-table tr:hover {
+            background: var(--bg-accent);
+        }
+        
+        .history-loading {
+            text-align: center;
+            color: var(--accent-primary);
+            padding: 2rem;
+            font-style: italic;
+        }
+        
+        .history-empty {
+            text-align: center;
+            color: var(--text-tertiary);
+            padding: 2rem;
+        }
+        
+        .history-error {
+            text-align: center;
+            color: var(--error);
+            padding: 1rem;
+            background: var(--error-light);
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
         }
         
         /* Rest Timer Styles */
@@ -549,97 +627,6 @@
             color: var(--error);
         }
         
-        /* Exercise History Card Styles */
-        .history-card {
-            position: absolute;
-            width: 100%;
-            max-width: 400px;
-            height: auto;
-            max-height: calc(100% - 1rem);
-            background: var(--bg-primary);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-            border: 1px solid var(--border-light);
-            padding: 1.5rem;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 5;
-            overflow-y: auto;
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .history-card.visible {
-            transform: translateY(0);
-            opacity: 1;
-            pointer-events: auto;
-            z-index: 20;
-        }
-        
-        .history-card.preview {
-            transform: translateY(80%);
-            opacity: 0.9;
-            pointer-events: auto;
-            z-index: 15;
-        }
-        
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-        }
-        
-        .history-table th {
-            background: var(--bg-accent);
-            padding: 0.75rem 0.5rem;
-            text-align: left;
-            font-weight: 600;
-            color: var(--text-secondary);
-            border-bottom: 2px solid var(--border-medium);
-            font-size: 0.85rem;
-        }
-        
-        .history-table td {
-            padding: 0.75rem 0.5rem;
-            border-bottom: 1px solid var(--border-light);
-            color: var(--text-primary);
-        }
-        
-        .history-table tr:hover {
-            background: var(--bg-accent);
-        }
-        
-        .history-table .date-col {
-            width: 35%;
-        }
-        
-        .history-table .weight-col,
-        .history-table .reps-col,
-        .history-table .time-col {
-            width: 22%;
-            text-align: center;
-        }
-        
-        .history-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--border-light);
-        }
-        
-        .history-close-hint {
-            font-size: 0.8rem;
-            color: var(--text-tertiary);
-            text-align: center;
-            margin-top: 1rem;
-            padding: 0.5rem;
-            background: var(--bg-accent);
-            border-radius: var(--radius-md);
-        }
-        
         .loading {
             color: var(--accent-primary);
             font-style: normal;
@@ -684,12 +671,12 @@
         }
         
         /* Card stack effect */
-        .card:not(.active) {
+        .card-stack:not(.active) {
             transform: scale(0.95);
             opacity: 0.7;
         }
         
-        .card.active {
+        .card-stack.active {
             transform: scale(1);
             opacity: 1;
             z-index: 10;
@@ -698,11 +685,11 @@
         /* Mobile-first approach - show mobile dots by default */
         @media (max-width: 768px) {
             .navigation {
-                display: none !important; /* Force hide navigation on mobile */
+                display: none !important;
             }
             
             .mobile-progress-dots {
-                display: flex !important; /* Force show mobile dots */
+                display: flex !important;
                 bottom: 1.5rem;
                 padding: 0.4rem 0.8rem;
             }
@@ -717,7 +704,7 @@
             }
             
             .cards-container {
-                padding: 0.75rem 0.5rem 2rem; /* Add bottom padding for floating dots */
+                padding: 0.75rem 0.5rem 2rem;
             }
             
             .card {
@@ -763,29 +750,24 @@
                 font-size: 2rem;
             }
             
-            .history-card {
-                max-width: 95%;
-                padding: 1rem;
-            }
-            
             .history-table {
                 font-size: 0.8rem;
             }
             
             .history-table th,
             .history-table td {
-                padding: 0.5rem 0.3rem;
+                padding: 0.5rem 0.25rem;
             }
         }
         
         /* Desktop - hide mobile dots, show navigation */
         @media (min-width: 769px) {
             .mobile-progress-dots {
-                display: none !important; /* Force hide mobile dots on desktop */
+                display: none !important;
             }
             
             .navigation {
-                display: flex !important; /* Force show navigation on desktop */
+                display: flex !important;
             }
         }
     </style>
@@ -798,7 +780,7 @@
         </div>
         
         <div class="cards-container" id="cardsContainer">
-            <!-- Cards will be dynamically generated -->
+            <!-- Card stacks will be dynamically generated -->
         </div>
         
         <div class="navigation">
@@ -925,9 +907,213 @@
         let availableWorkouts = [];
         let selectedWorkout = null;
         let workoutStructure = null;
-        let restTimers = new Map(); // Store active rest timers
-        let expandedHistoryCard = null; // Track which exercise has history expanded
-        let isHistoryExpanded = false; // Track if any history is currently shown
+        let restTimers = new Map();
+        let currentHistoryCard = null; // Track which history card is open
+        let historySwipeDisabled = false; // Flag to disable horizontal swipes
+
+        // ===============================
+        // TOUCH/SWIPE HANDLING WITH HISTORY
+        // ===============================
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const deltaX = touchStartX - touchEndX;
+            const deltaY = touchStartY - touchEndY;
+            const absDeltaX = Math.abs(deltaX);
+            const absDeltaY = Math.abs(deltaY);
+            
+            // Determine if this is primarily a vertical or horizontal swipe
+            const isVerticalSwipe = absDeltaY > absDeltaX;
+            const horizontalThreshold = 50;
+            const verticalThreshold = 100;
+            
+            // Handle vertical swipes (history functionality)
+            if (isVerticalSwipe && absDeltaY > verticalThreshold) {
+                // Only handle vertical swipes on exercise cards
+                if (isCurrentCardExercise()) {
+                    if (deltaY > 0) {
+                        // Swipe up - show history
+                        showHistoryForCurrentExercise();
+                    } else if (currentHistoryCard !== null) {
+                        // Swipe down - hide history (only if history is open)
+                        hideHistory();
+                    }
+                }
+                return;
+            }
+            
+            // Handle horizontal swipes (navigation) - only if history is not open
+            if (!isVerticalSwipe && absDeltaX > horizontalThreshold && !historySwipeDisabled) {
+                if (deltaX > 0) {
+                    // Swipe left (next card)
+                    nextCard();
+                } else {
+                    // Swipe right (previous card)
+                    previousCard();
+                }
+            }
+        }
+
+        function isCurrentCardExercise() {
+            if (!workoutStructure || currentCard === 0 || currentCard === totalCards - 1) {
+                return false; // Selection or completion card
+            }
+            
+            const structureIndex = currentCard - 1;
+            if (structureIndex >= 0 && structureIndex < workoutStructure.cards.length) {
+                const cardData = workoutStructure.cards[structureIndex];
+                return cardData.type === 'exercise';
+            }
+            
+            return false;
+        }
+
+        // ===============================
+        // HISTORY CARD FUNCTIONS
+        // ===============================
+        async function showHistoryForCurrentExercise() {
+            if (!isCurrentCardExercise()) return;
+            
+            const structureIndex = currentCard - 1;
+            const cardData = workoutStructure.cards[structureIndex];
+            const exerciseName = cardData.exercise_name;
+            
+            // Close any existing history first
+            if (currentHistoryCard !== null) {
+                hideHistory();
+            }
+            
+            // Find the card stack for current exercise
+            const cardStack = document.querySelector(`.card-stack[data-index="${currentCard}"]`);
+            if (!cardStack) return;
+            
+            // Disable horizontal swipes while history is open
+            historySwipeDisabled = true;
+            currentHistoryCard = currentCard;
+            
+            // Add history card to the stack
+            const historyCard = await createHistoryCard(exerciseName);
+            cardStack.appendChild(historyCard);
+            
+            // Trigger the slide animation
+            setTimeout(() => {
+                cardStack.classList.add('history-open');
+            }, 10);
+        }
+
+        function hideHistory() {
+            if (currentHistoryCard === null) return;
+            
+            const cardStack = document.querySelector(`.card-stack[data-index="${currentHistoryCard}"]`);
+            if (!cardStack) return;
+            
+            // Remove the animation class
+            cardStack.classList.remove('history-open');
+            
+            // Remove the history card after animation completes
+            setTimeout(() => {
+                const historyCard = cardStack.querySelector('.history-card');
+                if (historyCard) {
+                    historyCard.remove();
+                }
+                
+                // Re-enable horizontal swipes
+                historySwipeDisabled = false;
+                currentHistoryCard = null;
+            }, 400); // Match the CSS transition duration
+        }
+
+        async function createHistoryCard(exerciseName) {
+            const card = document.createElement('div');
+            card.className = 'card history-card';
+            
+            // Show loading state initially
+            card.innerHTML = `
+                <h1>📊 ${exerciseName}</h1>
+                <h3>Exercise History</h3>
+                <div class="history-loading">Loading previous workouts...</div>
+            `;
+            
+            // Load history data
+            try {
+                const result = await getExerciseHistory(exerciseName);
+                
+                if (result.history && result.history.length > 0) {
+                    // Limit to 5 most recent entries
+                    const recentHistory = result.history.slice(0, 5);
+                    
+                    card.innerHTML = `
+                        <h1>📊 ${exerciseName}</h1>
+                        <h3>Last 5 Workouts</h3>
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Weight</th>
+                                    <th>Reps</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recentHistory.map(entry => `
+                                    <tr>
+                                        <td>${new Date(entry.date).toLocaleDateString('en-US', { 
+                                            month: 'short', 
+                                            day: 'numeric' 
+                                        })}</td>
+                                        <td>${entry.weight > 0 ? `${entry.weight} lbs` : '—'}</td>
+                                        <td>${entry.reps > 0 ? entry.reps : (entry.time_seconds > 0 ? `${entry.time_seconds}s` : '—')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <p style="color: var(--text-tertiary); margin-top: 1.5rem; font-size: 0.85rem; text-align: center;">
+                            Swipe down to return to exercise
+                        </p>
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <h1>📊 ${exerciseName}</h1>
+                        <h3>Exercise History</h3>
+                        <div class="history-empty">
+                            <p>No previous data found</p>
+                            <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--text-muted);">
+                                Complete this exercise to start tracking your progress!
+                            </p>
+                        </div>
+                        <p style="color: var(--text-tertiary); margin-top: 1.5rem; font-size: 0.85rem; text-align: center;">
+                            Swipe down to return to exercise
+                        </p>
+                    `;
+                }
+            } catch (error) {
+                card.innerHTML = `
+                    <h1>📊 ${exerciseName}</h1>
+                    <h3>Exercise History</h3>
+                    <div class="history-error">
+                        Error loading history: ${error.message}
+                    </div>
+                    <p style="color: var(--text-tertiary); margin-top: 1.5rem; font-size: 0.85rem; text-align: center;">
+                        Swipe down to return to exercise
+                    </p>
+                `;
+            }
+            
+            return card;
+        }
 
         // ===============================
         // REST TIMER FUNCTIONS
@@ -979,7 +1165,7 @@
                     }
                     
                     if (progressElement) {
-                        const circumference = 2 * Math.PI * 90; // radius = 90
+                        const circumference = 2 * Math.PI * 90;
                         const progress = (duration - seconds) / duration;
                         const offset = circumference * (1 - progress);
                         
@@ -1001,154 +1187,60 @@
                     }
                 },
                 onExpire() {
-                    // Play chime sound
                     this.playChime();
                 }
             };
             
-            // Add improved audio chime method with multiple fallbacks
             timer.playChime = function() {
-                console.log('🔔 Attempting to play rest timer chime...');
+                console.log('🔔 Rest timer completed');
                 
-                // Method 1: Try Web Audio API with user gesture detection
                 try {
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     
-                    // Check if audio context is allowed
                     if (audioContext.state === 'suspended') {
-                        console.log('Audio context suspended, trying to resume...');
                         audioContext.resume().then(() => {
                             this.playWebAudioChime(audioContext);
                         }).catch(() => {
-                            console.log('Could not resume audio context, trying fallbacks...');
-                            this.tryFallbackSounds();
+                            this.tryFallbackFeedback();
                         });
                     } else {
                         this.playWebAudioChime(audioContext);
                     }
                 } catch (error) {
-                    console.log('Web Audio API failed:', error.message);
-                    this.tryFallbackSounds();
+                    this.tryFallbackFeedback();
                 }
             };
             
             timer.playWebAudioChime = function(audioContext) {
                 try {
-                    // Create multiple oscillators for a richer chime sound
-                    const oscillator1 = audioContext.createOscillator();
-                    const oscillator2 = audioContext.createOscillator();
-                    const oscillator3 = audioContext.createOscillator();
+                    const oscillator = audioContext.createOscillator();
                     const gainNode = audioContext.createGain();
                     
-                    oscillator1.connect(gainNode);
-                    oscillator2.connect(gainNode);
-                    oscillator3.connect(gainNode);
+                    oscillator.connect(gainNode);
                     gainNode.connect(audioContext.destination);
                     
-                    // Set frequencies for a pleasant chime (C major chord)
-                    oscillator1.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-                    oscillator2.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
-                    oscillator3.frequency.setValueAtTime(783.99, audioContext.currentTime); // G5
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    oscillator.type = 'sine';
                     
-                    // Set waveform for a more bell-like sound
-                    oscillator1.type = 'sine';
-                    oscillator2.type = 'sine';
-                    oscillator3.type = 'triangle';
-                    
-                    // Create envelope for bell-like decay
                     gainNode.gain.setValueAtTime(0, audioContext.currentTime);
                     gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.02);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1);
                     
-                    // Start and stop oscillators
-                    const startTime = audioContext.currentTime;
-                    const stopTime = startTime + 2;
-                    
-                    oscillator1.start(startTime);
-                    oscillator2.start(startTime);
-                    oscillator3.start(startTime);
-                    
-                    oscillator1.stop(stopTime);
-                    oscillator2.stop(stopTime);
-                    oscillator3.stop(stopTime);
-                    
-                    console.log('🔔 Web Audio chime played successfully');
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 1);
                 } catch (error) {
-                    console.log('Web Audio chime failed:', error.message);
-                    this.tryFallbackSounds();
+                    this.tryFallbackFeedback();
                 }
             };
             
-            timer.tryFallbackSounds = function() {
-                console.log('🔔 Trying fallback sound methods...');
-                
-                // Method 2: Try HTML5 Audio with data URL
-                try {
-                    // Create a simple beep tone as data URL
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const sampleRate = audioContext.sampleRate;
-                    const duration = 0.5;
-                    const numSamples = sampleRate * duration;
-                    const buffer = audioContext.createBuffer(1, numSamples, sampleRate);
-                    const channelData = buffer.getChannelData(0);
-                    
-                    // Generate a simple sine wave
-                    for (let i = 0; i < numSamples; i++) {
-                        channelData[i] = Math.sin(2 * Math.PI * 800 * i / sampleRate) * 0.3;
-                    }
-                    
-                    const source = audioContext.createBufferSource();
-                    source.buffer = buffer;
-                    source.connect(audioContext.destination);
-                    source.start();
-                    
-                    console.log('🔔 Fallback audio buffer played');
-                } catch (error) {
-                    console.log('Fallback audio failed:', error.message);
-                    this.tryPhysicalFeedback();
-                }
-            };
-            
-            timer.tryPhysicalFeedback = function() {
-                console.log('🔔 Trying physical feedback...');
-                
-                // Method 3: Vibration API
+            timer.tryFallbackFeedback = function() {
                 if ('vibrate' in navigator) {
                     try {
-                        // Create a pattern: short, pause, short, pause, long
-                        navigator.vibrate([200, 100, 200, 100, 500]);
-                        console.log('📳 Vibration feedback triggered');
-                        return;
+                        navigator.vibrate([200, 100, 200]);
                     } catch (error) {
-                        console.log('Vibration failed:', error.message);
+                        console.log('Vibration failed');
                     }
                 }
-                
-                // Method 4: Visual feedback as last resort
-                console.log('🔔 Using visual feedback only');
-                this.triggerVisualAlert();
-            };
-            
-            timer.triggerVisualAlert = function() {
-                // Flash the timer text briefly
-                const timerElement = document.getElementById(`timer-text-${cardId}`);
-                if (timerElement) {
-                    timerElement.style.animation = 'pulse-text 0.5s ease-in-out 3';
-                    setTimeout(() => {
-                        timerElement.style.animation = '';
-                    }, 1500);
-                }
-                
-                // Also flash the border of the card
-                const cards = document.querySelectorAll('.card.rest-card');
-                cards.forEach(card => {
-                    if (card.classList.contains('active')) {
-                        card.style.animation = 'flash-border 0.3s ease-in-out 4';
-                        setTimeout(() => {
-                            card.style.animation = '';
-                        }, 1200);
-                    }
-                });
             };
             
             return timer;
@@ -1189,7 +1281,7 @@
                 plan: workoutPlan,
                 totalExercises: 0,
                 exercises: [],
-                cards: [] // Track all cards including rest cards
+                cards: []
             };
 
             workoutPlan.blocks.forEach((block, blockIndex) => {
@@ -1212,10 +1304,6 @@
                         structure.cards.push(exerciseCard);
                         structure.totalExercises++;
                         
-                        // Add rest card after this exercise if:
-                        // 1. It's the last exercise in this round
-                        // 2. It's not the last round
-                        // 3. There's rest time specified
                         const isLastExerciseInRound = exerciseIndex === block.exercises.length - 1;
                         const isNotLastRound = round < block.rounds;
                         const hasRestTime = block.rest_between_rounds > 0;
@@ -1241,263 +1329,49 @@
         }
 
         // ===============================
-        // SWIPE UP/DOWN GESTURE HANDLING
-        // ===============================
-        
-        function addSwipeUpListeners(card, exerciseName, exerciseKey) {
-            let startY = 0;
-            let startX = 0;
-            let currentY = 0;
-            let currentX = 0;
-            let isSwipeActive = false;
-            let historyCard = null;
-            
-            card.addEventListener('touchstart', (e) => {
-                if (isHistoryExpanded) return;
-                
-                startY = e.touches[0].clientY;
-                startX = e.touches[0].clientX;
-                isSwipeActive = true;
-                historyCard = document.getElementById(`history_${exerciseKey}`);
-            }, { passive: true });
-            
-            card.addEventListener('touchmove', (e) => {
-                if (!isSwipeActive || isHistoryExpanded) return;
-                
-                currentY = e.touches[0].clientY;
-                currentX = e.touches[0].clientX;
-                const deltaY = startY - currentY;
-                const deltaX = Math.abs(startX - currentX);
-                
-                // Only handle if it's primarily a vertical swipe
-                if (Math.abs(deltaY) > deltaX && deltaY > 20) {
-                    // Show preview when swiping up
-                    if (deltaY > 20 && deltaY < 100 && historyCard) {
-                        historyCard.classList.add('preview');
-                        historyCard.classList.remove('visible');
-                    } else if (deltaY <= 20 && historyCard) {
-                        historyCard.classList.remove('preview', 'visible');
-                    }
-                }
-            }, { passive: true });
-            
-            card.addEventListener('touchend', (e) => {
-                if (!isSwipeActive) return;
-                
-                const deltaY = startY - currentY;
-                const deltaX = Math.abs(startX - currentX);
-                
-                // Only trigger history if it was primarily a vertical swipe
-                if (Math.abs(deltaY) > deltaX && deltaY >= 100) {
-                    // Swipe up threshold met - show history
-                    showHistoryCard(exerciseName, exerciseKey);
-                } else if (historyCard) {
-                    // Reset preview
-                    historyCard.classList.remove('preview', 'visible');
-                }
-                
-                isSwipeActive = false;
-            }, { passive: true });
-        }
-        
-        function addSwipeDownListener(historyCard, exerciseKey) {
-            let startY = 0;
-            let currentY = 0;
-            let isSwipeActive = false;
-            
-            historyCard.addEventListener('touchstart', (e) => {
-                startY = e.touches[0].clientY;
-                isSwipeActive = true;
-            }, { passive: true });
-            
-            historyCard.addEventListener('touchmove', (e) => {
-                if (!isSwipeActive) return;
-                
-                currentY = e.touches[0].clientY;
-                const deltaY = currentY - startY;
-                
-                // Show preview of closing when swiping down
-                if (deltaY > 20) {
-                    const progress = Math.min(deltaY / 100, 1);
-                    historyCard.style.transform = `translateY(${progress * 80}%)`;
-                }
-            }, { passive: true });
-            
-            historyCard.addEventListener('touchend', (e) => {
-                if (!isSwipeActive) return;
-                
-                const deltaY = currentY - startY;
-                
-                if (deltaY >= 100) {
-                    // Swipe down threshold met - hide history
-                    hideHistoryCard(exerciseKey);
-                } else {
-                    // Reset position
-                    historyCard.style.transform = 'translateY(0)';
-                }
-                
-                isSwipeActive = false;
-            }, { passive: true });
-        }
-        
-        async function showHistoryCard(exerciseName, exerciseKey) {
-            // Close any existing expanded history
-            if (expandedHistoryCard && expandedHistoryCard !== exerciseKey) {
-                hideHistoryCard(expandedHistoryCard);
-            }
-            
-            const historyCard = document.getElementById(`history_${exerciseKey}`);
-            if (!historyCard) return;
-            
-            expandedHistoryCard = exerciseKey;
-            isHistoryExpanded = true;
-            
-            // Show the card
-            historyCard.classList.remove('preview');
-            historyCard.classList.add('visible');
-            
-            // Load history data
-            await loadHistoryData(exerciseName, exerciseKey);
-        }
-        
-        function hideHistoryCard(exerciseKey) {
-            const historyCard = document.getElementById(`history_${exerciseKey}`);
-            if (!historyCard) return;
-            
-            historyCard.classList.remove('visible', 'preview');
-            historyCard.style.transform = '';
-            historyCard.style.opacity = '0';
-            historyCard.style.pointerEvents = 'none';
-            historyCard.style.zIndex = '5';
-            
-            if (expandedHistoryCard === exerciseKey) {
-                expandedHistoryCard = null;
-                isHistoryExpanded = false;
-            }
-        }
-        
-        async function loadHistoryData(exerciseName, exerciseKey) {
-            const container = document.getElementById(`historyTableContainer_${exerciseKey}`);
-            if (!container) return;
-            
-            try {
-                const result = await getExerciseHistory(exerciseName);
-                
-                if (result.history && result.history.length > 0) {
-                    // Take only the first 5 entries
-                    const recentHistory = result.history.slice(0, 5);
-                    
-                    container.innerHTML = `
-                        <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th class="date-col">Date</th>
-                                    <th class="weight-col">Weight</th>
-                                    <th class="reps-col">Reps</th>
-                                    <th class="time-col">Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${recentHistory.map(entry => `
-                                    <tr>
-                                        <td class="date-col">
-                                            <div style="font-weight: 500;">
-                                                ${new Date(entry.date).toLocaleDateString('en-US', { 
-                                                    month: 'short', 
-                                                    day: 'numeric' 
-                                                })}
-                                            </div>
-                                            <div style="font-size: 0.75rem; color: var(--text-tertiary);">
-                                                Round ${entry.round}
-                                            </div>
-                                        </td>
-                                        <td class="weight-col">
-                                            ${entry.weight > 0 ? `${entry.weight} lbs` : '—'}
-                                        </td>
-                                        <td class="reps-col">
-                                            ${entry.reps > 0 ? entry.reps : '—'}
-                                        </td>
-                                        <td class="time-col">
-                                            ${entry.time_seconds > 0 ? `${entry.time_seconds}s` : '—'}
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-                } else {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
-                            <div style="font-size: 2rem; margin-bottom: 1rem;">📊</div>
-                            <div>No previous data found</div>
-                            <div style="font-size: 0.8rem; margin-top: 0.5rem;">
-                                Complete this exercise to build your history
-                            </div>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="error" style="margin: 1rem 0;">
-                        Error loading history: ${error.message}
-                    </div>
-                `;
-            }
-        }
-
-        // ===============================
         // CARD GENERATION AND NAVIGATION
         // ===============================
         async function generateCards() {
             const container = document.getElementById('cardsContainer');
             container.innerHTML = '';
 
-            // If no workout selected, show selection screen
             if (!selectedWorkout) {
-                container.appendChild(await createWorkoutSelectionCard());
+                container.appendChild(await createWorkoutSelectionStack());
                 totalCards = 1;
                 generateProgressDots();
                 showCard(0);
                 return;
             }
 
-            // Calculate total cards: Selection + all cards (exercises + rest) + Completion
             totalCards = 1 + workoutStructure.cards.length + 1;
 
-            // Generate Selection Card (shows selected workout)
-            container.appendChild(createSelectedWorkoutCard());
+            container.appendChild(createSelectedWorkoutStack());
 
-            // Generate Cards (exercises and rest cards)
-            workoutStructure.cards.forEach(card => {
+            workoutStructure.cards.forEach((card, index) => {
+                const cardIndex = index + 1; // Add 1 for selection card
                 if (card.type === 'exercise') {
-                    const exerciseCard = createExerciseCard(card);
-                    container.appendChild(exerciseCard);
-                    
-                    // Create and append history card for this exercise
-                    const historyCard = createHistoryCard(card.exercise_name, `${card.exercise_id}_${card.block_index}_${card.round}`);
-                    container.appendChild(historyCard);
+                    container.appendChild(createExerciseStack(card, cardIndex));
                 } else if (card.type === 'rest') {
-                    container.appendChild(createRestCard(card));
+                    container.appendChild(createRestStack(card, cardIndex));
                 }
             });
 
-            // Generate Completion Card
-            container.appendChild(createCompletionCard());
+            container.appendChild(createCompletionStack());
 
-            // Generate progress dots
             generateProgressDots();
-
-            // Show first card
             showCard(0);
         }
 
-        async function createWorkoutSelectionCard() {
-            const card = document.createElement('div');
-            card.className = 'card active';
+        async function createWorkoutSelectionStack() {
+            const stack = document.createElement('div');
+            stack.className = 'card-stack';
+            stack.setAttribute('data-index', '0');
             
             try {
                 const workouts = await loadAvailableWorkouts();
                 
+                const card = document.createElement('div');
+                card.className = 'card exercise-card';
                 card.innerHTML = `
                     <img src="./Rocket.svg" alt="Rocket Icon" style="width: 64px; height: 64px; margin-bottom: 1rem;">
                     <h1>Choose Your Workout</h1>
@@ -1520,7 +1394,11 @@
                         Loading workout...
                     </div>
                 `;
+                
+                stack.appendChild(card);
             } catch (error) {
+                const card = document.createElement('div');
+                card.className = 'card exercise-card';
                 card.innerHTML = `
                     <h1>💪 Workout Tracker</h1>
                     <div class="error">
@@ -1528,18 +1406,22 @@
                     </div>
                     <button class="btn" onclick="location.reload()">Retry</button>
                 `;
+                stack.appendChild(card);
             }
             
-            return card;
+            return stack;
         }
 
-        function createSelectedWorkoutCard() {
-            const card = document.createElement('div');
-            card.className = 'card';
+        function createSelectedWorkoutStack() {
+            const stack = document.createElement('div');
+            stack.className = 'card-stack';
+            stack.setAttribute('data-index', '0');
             
             const totalBlocks = selectedWorkout.blocks.length;
             const totalExercises = workoutStructure.totalExercises;
             
+            const card = document.createElement('div');
+            card.className = 'card exercise-card';
             card.innerHTML = `
                 <h1>💪 ${selectedWorkout.plan_name}</h1>
                 <div class="exercise-info">
@@ -1575,16 +1457,21 @@
                     Starting workout...
                 </div>
             `;
-            return card;
+            
+            stack.appendChild(card);
+            return stack;
         }
 
-        function createExerciseCard(exercise) {
-            const card = document.createElement('div');
-            card.className = 'card';
+        function createExerciseStack(exercise, stackIndex) {
+            const stack = document.createElement('div');
+            stack.className = 'card-stack';
+            stack.setAttribute('data-index', stackIndex.toString());
             
             const exerciseKey = `${exercise.exercise_id}_${exercise.block_index}_${exercise.round}`;
             const previousData = exerciseData[exerciseKey] || {};
 
+            const card = document.createElement('div');
+            card.className = 'card exercise-card';
             card.innerHTML = `
                 <h2>${exercise.exercise_name}</h2>
                 <div class="exercise-info">
@@ -1603,11 +1490,9 @@
                             <strong>Note:</strong> ${exercise.notes}
                         </div>
                     ` : ''}
-                    ${exercise.instructions ? `
-                        <div style="margin-bottom: 0.75rem; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-accent); padding: 0.75rem; border-radius: var(--radius-md); border-left: 3px solid var(--accent-primary);">
-                            <strong>Instructions:</strong> ${exercise.instructions}
-                        </div>
-                    ` : ''}
+                    <p style="color: var(--text-tertiary); font-size: 0.85rem; text-align: center; margin-top: 0.75rem;">
+                        Swipe up to view exercise history
+                    </p>
                 </div>
                 
                 ${!exercise.is_timed ? `
@@ -1632,46 +1517,19 @@
                 <div id="saveStatus_${exerciseKey}" style="margin-top: 0.5rem;"></div>
             `;
             
-            // Add touch event listeners for swipe up
-            addSwipeUpListeners(card, exercise.exercise_name, exerciseKey);
-            
-            return card;
+            stack.appendChild(card);
+            return stack;
         }
 
-        function createHistoryCard(exerciseName, exerciseKey) {
+        function createRestStack(restData, stackIndex) {
+            const stack = document.createElement('div');
+            stack.className = 'card-stack';
+            stack.setAttribute('data-index', stackIndex.toString());
+            
+            const circumference = 2 * Math.PI * 90;
+            
             const card = document.createElement('div');
-            card.className = 'history-card';
-            card.id = `history_${exerciseKey}`;
-            
-            card.innerHTML = `
-                <div class="history-header">
-                    <h2>${exerciseName} History</h2>
-                    <div style="font-size: 0.8rem; color: var(--text-tertiary);">
-                        Last 5 sessions
-                    </div>
-                </div>
-                
-                <div id="historyTableContainer_${exerciseKey}">
-                    <div class="loading">Loading history...</div>
-                </div>
-                
-                <div class="history-close-hint">
-                    Swipe down to return to exercise
-                </div>
-            `;
-            
-            // Add swipe down listener
-            addSwipeDownListener(card, exerciseKey);
-            
-            return card;
-        }
-
-        function createRestCard(restData) {
-            const card = document.createElement('div');
-            card.className = 'card rest-card';
-            
-            const circumference = 2 * Math.PI * 90; // radius = 90
-            
+            card.className = 'card rest-card exercise-card';
             card.innerHTML = `
                 <div class="rest-instructions">
                     <h3>Round ${restData.round} Complete!</h3>
@@ -1708,12 +1566,17 @@
                 </p>
             `;
             
-            return card;
+            stack.appendChild(card);
+            return stack;
         }
 
-        function createCompletionCard() {
+        function createCompletionStack() {
+            const stack = document.createElement('div');
+            stack.className = 'card-stack';
+            stack.setAttribute('data-index', (totalCards - 1).toString());
+            
             const card = document.createElement('div');
-            card.className = 'card';
+            card.className = 'card exercise-card';
             card.innerHTML = `
                 <h1>🎉 Workout Complete!</h1>
                 <div class="timer" id="finalTime">--:--</div>
@@ -1728,23 +1591,22 @@
                     Choose Another Workout
                 </button>
             `;
-            return card;
+            
+            stack.appendChild(card);
+            return stack;
         }
 
         function generateProgressDots() {
-            // Generate dots for desktop navigation
             const container = document.getElementById('progressDots');
             container.innerHTML = '';
             
-            // Create dots for all cards (including rest cards)
             for (let i = 0; i < totalCards; i++) {
                 const dot = document.createElement('div');
                 dot.className = 'dot';
                 dot.id = `dot_${i}`;
                 
-                // Mark rest card dots
                 if (i > 0 && i < totalCards - 1) {
-                    const cardIndex = i - 1; // Subtract for selection card
+                    const cardIndex = i - 1;
                     if (cardIndex < workoutStructure.cards.length) {
                         const cardData = workoutStructure.cards[cardIndex];
                         if (cardData.type === 'rest') {
@@ -1756,7 +1618,6 @@
                 container.appendChild(dot);
             }
             
-            // Generate dots for mobile floating display
             const mobileContainer = document.getElementById('mobileProgressDots');
             mobileContainer.innerHTML = '';
             
@@ -1765,9 +1626,8 @@
                 dot.className = 'dot';
                 dot.id = `mobile_dot_${i}`;
                 
-                // Mark rest card dots
                 if (i > 0 && i < totalCards - 1) {
-                    const cardIndex = i - 1; // Subtract for selection card
+                    const cardIndex = i - 1;
                     if (cardIndex < workoutStructure.cards.length) {
                         const cardData = workoutStructure.cards[cardIndex];
                         if (cardData.type === 'rest') {
@@ -1781,67 +1641,53 @@
         }
 
         function showCard(index) {
-            const cards = document.querySelectorAll('.card:not(.history-card)'); // Exclude history cards from main navigation
-            
-            // Auto-close any expanded history when navigating
-            if (expandedHistoryCard) {
-                hideHistoryCard(expandedHistoryCard);
+            // Hide any open history first
+            if (currentHistoryCard !== null && currentHistoryCard !== index) {
+                hideHistory();
             }
             
-            // Hide all history cards when navigating
-            const historyCards = document.querySelectorAll('.history-card');
-            historyCards.forEach(card => {
-                card.classList.remove('visible', 'preview');
-                card.style.opacity = '0';
-                card.style.pointerEvents = 'none';
-                card.style.zIndex = '5';
-            });
+            const cardStacks = document.querySelectorAll('.card-stack');
             
-            cards.forEach((card, i) => {
-                card.classList.remove('active');
+            cardStacks.forEach((stack, i) => {
+                stack.classList.remove('active');
                 if (i === index) {
-                    card.style.transform = 'translateX(0) scale(1)';
-                    card.style.opacity = '1';
-                    card.style.zIndex = '10';
-                    card.classList.add('active');
+                    stack.style.transform = 'translateX(0) scale(1)';
+                    stack.style.opacity = '1';
+                    stack.style.zIndex = '10';
+                    stack.classList.add('active');
                 } else if (i < index) {
-                    card.style.transform = 'translateX(-120%) scale(0.95)';
-                    card.style.opacity = '0.7';
-                    card.style.zIndex = '1';
+                    stack.style.transform = 'translateX(-120%) scale(0.95)';
+                    stack.style.opacity = '0.7';
+                    stack.style.zIndex = '1';
                 } else {
-                    card.style.transform = 'translateX(120%) scale(0.95)';
-                    card.style.opacity = '0.7';
-                    card.style.zIndex = '1';
+                    stack.style.transform = 'translateX(120%) scale(0.95)';
+                    stack.style.opacity = '0.7';
+                    stack.style.zIndex = '1';
                 }
             });
 
-            // Handle rest card timers
             handleRestCardDisplay(index);
-
-            // Update persistent header for exercise cards
             updatePersistentHeader(index);
-
             updateProgressDots(index);
             updateNavigationButtons(index);
             
-            // Auto-focus first input on exercise cards
             setTimeout(() => {
-                const activeCard = cards[index];
-                const firstInput = activeCard.querySelector('input');
-                if (firstInput) {
-                    firstInput.focus();
+                const activeStack = cardStacks[index];
+                if (activeStack) {
+                    const firstInput = activeStack.querySelector('input');
+                    if (firstInput) {
+                        firstInput.focus();
+                    }
                 }
             }, 300);
         }
 
         function handleRestCardDisplay(cardIndex) {
-            // Stop all existing timers
             restTimers.forEach(timer => timer.stop());
             restTimers.clear();
             
-            // If showing a rest card, start its timer
             if (cardIndex > 0 && cardIndex < totalCards - 1) {
-                const structureIndex = cardIndex - 1; // Subtract for selection card
+                const structureIndex = cardIndex - 1;
                 if (structureIndex < workoutStructure.cards.length) {
                     const cardData = workoutStructure.cards[structureIndex];
                     if (cardData.type === 'rest') {
@@ -1858,18 +1704,15 @@
             const blockIndicator = document.getElementById('persistentBlockIndicator');
             const roundIndicator = document.getElementById('persistentRoundIndicator');
 
-            // Hide header for non-exercise cards (selection and completion)
             if (!workoutStructure || cardIndex === 0 || cardIndex === totalCards - 1) {
                 header.style.display = 'none';
                 return;
             }
 
-            // Get current card info
-            const structureIndex = cardIndex - 1; // Subtract 1 for selection card
+            const structureIndex = cardIndex - 1;
             if (structureIndex >= 0 && structureIndex < workoutStructure.cards.length) {
                 const cardData = workoutStructure.cards[structureIndex];
                 
-                // Show header for both exercise and rest cards
                 header.style.display = 'flex';
                 
                 if (cardData.type === 'rest') {
@@ -1883,7 +1726,6 @@
         }
 
         function updateProgressDots(currentIndex) {
-            // Update desktop dots
             const dots = document.querySelectorAll('#progressDots .dot');
             dots.forEach((dot, i) => {
                 dot.classList.remove('active', 'completed');
@@ -1894,7 +1736,6 @@
                 }
             });
             
-            // Update mobile dots
             const mobileDots = document.querySelectorAll('#mobileProgressDots .dot');
             mobileDots.forEach((dot, i) => {
                 dot.classList.remove('active', 'completed');
@@ -1927,7 +1768,6 @@
                 return;
             }
             
-            // Show workout details
             const workout = availableWorkouts.find(w => w.plan_id === select.value);
             if (workout) {
                 detailsDiv.innerHTML = `
@@ -1939,13 +1779,11 @@
                 `;
             }
             
-            // Load the full workout plan
             loadingDiv.style.display = 'block';
             try {
                 await loadWorkoutPlan(select.value);
                 loadingDiv.style.display = 'none';
                 
-                // Regenerate cards with the new workout
                 await generateCards();
             } catch (error) {
                 loadingDiv.innerHTML = `<div class="error">Error loading workout: ${error.message}</div>`;
@@ -1958,22 +1796,18 @@
         async function nextCard() {
             if (currentCard >= totalCards - 1) return;
             
-            // Special handling for workout selection
             if (currentCard === 0 && !selectedWorkout) {
                 const select = document.getElementById('workoutSelect');
                 if (!select.value) {
                     alert('Please select a workout first');
                     return;
                 }
-                // Workout should already be loaded by onWorkoutSelected
             }
             
-            // Special handling for selected workout card (start workout)
             if (currentCard === 0 && selectedWorkout && !workoutStarted) {
                 await handleWorkoutStart();
             }
             
-            // Save exercise data before moving (only for exercise cards)
             if (currentCard > 0 && currentCard < totalCards - 1 && workoutStarted) {
                 const structureIndex = currentCard - 1;
                 if (structureIndex < workoutStructure.cards.length) {
@@ -1984,7 +1818,6 @@
                 }
             }
             
-            // Special handling for completion card
             if (currentCard === totalCards - 2) {
                 await handleWorkoutCompletion();
             }
@@ -2035,7 +1868,7 @@
         async function saveCurrentExercise() {
             if (!workoutId || !workoutStructure) return;
             
-            const structureIndex = currentCard - 1; // Subtract 1 for selection card
+            const structureIndex = currentCard - 1;
             if (structureIndex < 0 || structureIndex >= workoutStructure.cards.length) return;
             
             const cardData = workoutStructure.cards[structureIndex];
@@ -2044,7 +1877,6 @@
             const exercise = cardData;
             const exerciseKey = `${exercise.exercise_id}_${exercise.block_index}_${exercise.round}`;
             
-            // Get form data
             const weightInput = document.getElementById(`weight_${exerciseKey}`);
             const repsInput = document.getElementById(`reps_${exerciseKey}`);
             const timeInput = document.getElementById(`time_${exerciseKey}`);
@@ -2058,7 +1890,6 @@
                 time_seconds: timeInput ? parseInt(timeInput.value) || 0 : 0
             };
             
-            // Only save if user entered data
             const hasData = exerciseData.weight > 0 || exerciseData.reps > 0 || exerciseData.time_seconds > 0;
             if (!hasData) return;
             
@@ -2072,7 +1903,6 @@
                 statusEl.textContent = '✅ Saved!';
                 statusEl.className = 'success';
                 
-                // Store data for auto-population
                 window.exerciseData = window.exerciseData || {};
                 window.exerciseData[exerciseKey] = exerciseData;
                 
@@ -2097,7 +1927,6 @@
                 statusEl.textContent = '✅ Workout saved successfully!';
                 statusEl.className = 'success';
                 
-                // Update final time
                 const finalTime = document.getElementById('finalTime');
                 finalTime.textContent = `${result.duration} minutes`;
                 
@@ -2120,69 +1949,20 @@
             exerciseData = {};
             selectedWorkout = null;
             workoutStructure = null;
-            expandedHistoryCard = null;
-            isHistoryExpanded = false;
+            currentHistoryCard = null;
+            historySwipeDisabled = false;
             
-            // Stop all rest timers
             restTimers.forEach(timer => timer.stop());
             restTimers.clear();
             
-            // Hide all history cards
-            const historyCards = document.querySelectorAll('.history-card');
-            historyCards.forEach(card => {
-                card.classList.remove('visible', 'preview');
-                card.style.opacity = '0';
-                card.style.pointerEvents = 'none';
-                card.style.zIndex = '5';
-            });
-            
             generateCards();
-        }
-
-        // ===============================
-        // TOUCH/SWIPE HANDLING
-        // ===============================
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let touchStartY = 0;
-        let touchEndY = 0;
-
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
-
-        document.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            touchEndY = e.changedTouches[0].screenY;
-            handleSwipe();
-        }, { passive: true });
-
-        function handleSwipe() {
-            // Disable horizontal swipes if history is expanded
-            if (isHistoryExpanded) return;
-            
-            const swipeThreshold = 50;
-            const diffX = touchStartX - touchEndX;
-            const diffY = Math.abs(touchStartY - touchEndY);
-            
-            // Only handle horizontal swipes (ignore vertical swipes)
-            if (Math.abs(diffX) > swipeThreshold && diffY < Math.abs(diffX)) {
-                if (diffX > 0) {
-                    // Swipe left (next card)
-                    nextCard();
-                } else {
-                    // Swipe right (previous card)
-                    previousCard();
-                }
-            }
         }
 
         // ===============================
         // INITIALIZATION
         // ===============================
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🏋️ Workout Tracker - Card Design with Swipe-Up History');
+            console.log('🏋️ Workout Tracker - Swipe Up History Feature');
             console.log('API URL:', API_CONFIG.BASE_URL);
             
             try {
@@ -2191,15 +1971,16 @@
             } catch (error) {
                 console.error('❌ App initialization failed:', error);
                 
-                // Show error on screen
                 const container = document.getElementById('cardsContainer');
                 container.innerHTML = `
-                    <div class="card active">
-                        <h1>❌ Error</h1>
-                        <div class="error">
-                            Failed to load workout app: ${error.message}
+                    <div class="card-stack active">
+                        <div class="card exercise-card">
+                            <h1>❌ Error</h1>
+                            <div class="error">
+                                Failed to load workout app: ${error.message}
+                            </div>
+                            <button class="btn" onclick="location.reload()">Retry</button>
                         </div>
-                        <button class="btn" onclick="location.reload()">Retry</button>
                     </div>
                 `;
             }
