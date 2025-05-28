@@ -1246,61 +1246,58 @@
         
         function addSwipeUpListeners(card, exerciseName, exerciseKey) {
             let startY = 0;
+            let startX = 0;
             let currentY = 0;
+            let currentX = 0;
             let isSwipeActive = false;
             let historyCard = null;
             
             card.addEventListener('touchstart', (e) => {
-                if (isHistoryExpanded) return; // Disable if any history is expanded
+                if (isHistoryExpanded) return;
                 
                 startY = e.touches[0].clientY;
+                startX = e.touches[0].clientX;
                 isSwipeActive = true;
                 historyCard = document.getElementById(`history_${exerciseKey}`);
-                
-                // Prevent event bubbling to avoid conflicts with global swipe handler
-                e.stopPropagation();
-            }, { passive: false });
+            }, { passive: true });
             
             card.addEventListener('touchmove', (e) => {
                 if (!isSwipeActive || isHistoryExpanded) return;
                 
                 currentY = e.touches[0].clientY;
+                currentX = e.touches[0].clientX;
                 const deltaY = startY - currentY;
+                const deltaX = Math.abs(startX - currentX);
                 
-                // Only handle upward swipes for history
-                if (deltaY > 0) {
+                // Only handle if it's primarily a vertical swipe
+                if (Math.abs(deltaY) > deltaX && deltaY > 20) {
                     // Show preview when swiping up
                     if (deltaY > 20 && deltaY < 100 && historyCard) {
                         historyCard.classList.add('preview');
                         historyCard.classList.remove('visible');
-                        // Prevent horizontal scrolling during vertical swipe
-                        e.preventDefault();
                     } else if (deltaY <= 20 && historyCard) {
                         historyCard.classList.remove('preview', 'visible');
                     }
-                    
-                    // Prevent horizontal swipe interference
-                    e.stopPropagation();
                 }
-            }, { passive: false });
+            }, { passive: true });
             
             card.addEventListener('touchend', (e) => {
                 if (!isSwipeActive) return;
                 
                 const deltaY = startY - currentY;
+                const deltaX = Math.abs(startX - currentX);
                 
-                if (deltaY >= 100) {
+                // Only trigger history if it was primarily a vertical swipe
+                if (Math.abs(deltaY) > deltaX && deltaY >= 100) {
                     // Swipe up threshold met - show history
                     showHistoryCard(exerciseName, exerciseKey);
-                    e.stopPropagation();
-                    e.preventDefault();
                 } else if (historyCard) {
                     // Reset preview
                     historyCard.classList.remove('preview', 'visible');
                 }
                 
                 isSwipeActive = false;
-            }, { passive: false });
+            }, { passive: true });
         }
         
         function addSwipeDownListener(historyCard, exerciseKey) {
@@ -2150,21 +2147,16 @@
         let touchStartY = 0;
         let touchEndY = 0;
 
-        function initializeSwipeHandlers() {
-            const container = document.getElementById('cardsContainer');
-            if (!container) return;
-            
-            container.addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-            }, { passive: true });
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
 
-            container.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
-            }, { passive: true });
-        }
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: true });
 
         function handleSwipe() {
             // Disable horizontal swipes if history is expanded
@@ -2194,9 +2186,6 @@
             console.log('API URL:', API_CONFIG.BASE_URL);
             
             try {
-                // Initialize swipe handlers
-                initializeSwipeHandlers();
-                
                 await generateCards();
                 console.log('✅ App initialized successfully');
             } catch (error) {
